@@ -148,7 +148,7 @@ The bundled learner provides:
 
 The orchestrator automatically resolves paths relative to its own location (`learner/evolution_orchestrator.py`), so it works from the bundled directory without configuration.
 
-**Porcelain-X decompiler**: The orchestrator calls the `porosity-analyzer` Rust binary. If `PORTOXITY_X_BINARY` is not set in your environment, it will look for `../porosity-x/target/debug/porosity-analyzer` relative to the project root (i.e., `/home/ghost/projects/porosity-x/target/debug/porosity-analyzer`). You can also set `PORTOXITY_X_BINARY` to an absolute path to the compiled Rust binary.
+**Porcelain-X decompiler**: The orchestrator calls the `porosity-analyzer` Rust binary. If `PORTOXITY_X_BINARY` is not set in your environment, it will look for `./porosity-x/target/debug/porosity-analyzer` relative to the project root (i.e., `<project_root>/porosity-x/target/debug/porosity-analyzer`). You can also set `PORTOXITY_X_BINARY` to an absolute path to the compiled Rust binary.
 
 ---
 
@@ -188,7 +188,7 @@ PYTHON_BIN=python3
 # Path to evolution_orchestrator.py (OPTIONAL — defaults to ./learner/evolution_orchestrator.py)
 EVOLUTION_ORCHESTRATOR_PATH=
 
-# Path to Porcelain-X Rust binary (OPTIONAL — defaults to ../porosity-x/target/debug/porosity-analyzer)
+# Path to Porcelain-X Rust binary (OPTIONAL — defaults to ./porosity-x/target/debug/porosity-analyzer)
 PORTOXITY_X_BINARY=
 
 # Enable orchestrator debug logging to /tmp/orchestrator_debug_*.md
@@ -329,7 +329,7 @@ Fetch source for a single contract (with orchestrator fallback). Headers: `x-eth
 | `MONGODB_URI` | ✅ | — | MongoDB connection string |
 | `PYTHON_BIN` | ❌ | `python3` | Python executable for orchestrator subprocess |
 | `EVOLUTION_ORCHESTRATOR_PATH` | ❌ | `./learner/evolution_orchestrator.py` | Path to orchestrator script (bundled in v5.1) |
-| `PORTOXITY_X_BINARY` | ❌ | `../porosity-x/target/debug/porosity-analyzer` | Path to Porcelain-X Rust binary |
+| `PORTOXITY_X_BINARY` | ❌ | `./porosity-x/target/debug/porosity-analyzer` | Path to Porcelain-X Rust binary |
 | `ORCHESTRATOR_DEBUG` | ❌ | `0` | Save debug logs to `/tmp/orchestrator_debug_*.md` |
 | `LOG_LEVEL` | ❌ | `info` | Logging verbosity |
 | `PORT` | ❌ | `3000` | Server port (Render sets this automatically) |
@@ -616,8 +616,7 @@ contract-auditor-v5.1/
 │   │   └── test_debug.rs
 │   └── target/
 │       └── debug/
-│           └── porosity-analyzer    # Pre-compiled binary (make executable)
-└── porosity-x/                     # (same as above — bundled Rust decompiler)
+│           └── porosity-analyzer    # Pre-compiled binary (executable)
 ```
 
 ---
