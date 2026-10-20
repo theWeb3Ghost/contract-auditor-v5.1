@@ -1,6 +1,13 @@
 node_modules/
+learner/node_modules/
 .env
-data/
+learner/.env
+learner/data/results/
+learner/data/etherscan_cache/
+learner/data/fetched_sources/
+learner/data/knowledge/
+learner/data/decompiled/
+learner/__pycache__/
 *.log
 .DS_Store
 *.swp

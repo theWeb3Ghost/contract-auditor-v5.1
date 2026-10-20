@@ -21,7 +21,7 @@ const {
 } = require('./llm');
 
 const ORCHESTRATOR_PATH = process.env.EVOLUTION_ORCHESTRATOR_PATH ||
-  '/home/ghost/projects/learner/evolution_orchestrator.py';
+  path.join(__dirname, '..', 'learner', 'evolution_orchestrator.py');
 const PYTHON_BIN = process.env.PYTHON_BIN || 'python3';
 const EVOLVE_TIMEOUT_MS = 180000;
 

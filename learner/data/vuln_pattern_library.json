@@ -1,0 +1,2091 @@
+{
+  "logic": {
+    "dangling_else": {
+      "regex": "else[^{]*;",
+      "confidence": 70,
+      "description": "Dangling else or misaligned if-else"
+    },
+    "braceless_if": {
+      "regex": "if\\s*\\([^)]*\\)\\s*[^;{}]*[^;]",
+      "confidence": 70,
+      "description": "Braceless if with unguarded statement"
+    },
+    "wrong_comparison": {
+      "regex": "(>\\s*==|<\\s*==|!=\\s*=|==\\s*\\d+\\s*&)",
+      "confidence": 65,
+      "description": "Wrong comparison operator"
+    },
+    "off_by_one": {
+      "regex": "(<=|>=)\\s*\\w+\\.length|array\\s*\\(\\s*length\\s*-\\s*1\\s*\\)",
+      "confidence": 65,
+      "description": "Off-by-one in loops or array indexing"
+    },
+    "inverted_bool": {
+      "regex": "require\\s*\\(\\s*!\\s*\\w+\\s*==",
+      "confidence": 65,
+      "description": "Inverted or incorrect boolean condition"
+    },
+    "operator_precedence": {
+      "regex": "!\\s*\\w+\\s*\\|\\||\\|\\|\\s*!=",
+      "confidence": 60,
+      "description": "Operator precedence mistake"
+    },
+    "short_circuit": {
+      "regex": "&&.*\\?.*:.*\\||if\\s*\\([^)]*\\)\\s*.*\\?",
+      "confidence": 60,
+      "description": "Short-circuit evaluation assumption"
+    },
+    "missing_return": {
+      "regex": "function\\s+\\w+\\s*\\([^)]*\\)\\s+(?:public|external)\\s+returns\\s*\\([^)]*\\)\\s*\\{[^r]*\\}",
+      "confidence": 70,
+      "description": "Missing return in non-void function"
+    },
+    "dead_code": {
+      "regex": "return.*;",
+      "confidence": 60,
+      "description": "Code after return statement (unreachable)"
+    },
+    "wrong_state_machine": {
+      "regex": "enum\\s+\\w+\\s*\\{[^}]*\\}",
+      "confidence": 60,
+      "description": "State machine transition - verify correct enum progression"
+    },
+    "wrong_phase": {
+      "regex": "function\\s+\\w+\\s*\\(.*\\)\\s+(?:public|external)",
+      "confidence": 60,
+      "description": "Function callable without phase/state check"
+    },
+    "check_path_gap": {
+      "regex": "require\\s*\\(.*\\);\\s*(if|for|while)",
+      "confidence": 65,
+      "description": "Check present on one path, missing on another"
+    },
+    "accounting_gap": {
+      "regex": "revert\\s*;|return;.*balance",
+      "confidence": 70,
+      "description": "Accounting not updated on all paths"
+    },
+    "copy_paste_var": {
+      "regex": "uint\\s+\\w+\\s*=\\s*\\w+;|balance\\s*=\\s*\\w+\\s*;",
+      "confidence": 60,
+      "description": "Copy-paste error: wrong variable used"
+    },
+    "variable_shadow": {
+      "regex": "function\\s+\\w+\\s*\\([^)]*\\)\\s*\\([^)]*uint[^)]*\\)\\s*\\{",
+      "confidence": 60,
+      "description": "Variable shadowing - local shadows state variable"
+    },
+    "uninit_var": {
+      "regex": "uint\\s+(?:public\\s+)?\\w+;|int\\s+(?:public\\s+)?\\w+;",
+      "confidence": 55,
+      "description": "Uninitialized state variable defaults to zero"
+    },
+    "modifier_no_semi": {
+      "regex": "modifier\\s+\\w+\\s*\\{[^_]*\\}",
+      "confidence": 65,
+      "description": "Modifier missing _; or returning early"
+    },
+    "modifier_order": {
+      "regex": "modifier\\s+\\w+\\s*\\{[^_]*modifier",
+      "confidence": 60,
+      "description": "Incorrect modifier ordering"
+    },
+    "require_vs_assert": {
+      "regex": "assert\\s*\\(.*\\)\\s*;.*msg\\.sender",
+      "confidence": 70,
+      "description": "assert reachable via user input or misuse of require/assert/revert"
+    },
+    "unit_error": {
+      "regex": "1 ether|10\\*\\*18|toWei",
+      "confidence": 60,
+      "description": "Wrong units: wei/ether or token decimal mismatch"
+    },
+    "time_unit": {
+      "regex": "block\\.timestamp\\s*%\\s*\\d+|seconds\\s*\\*\\s*24",
+      "confidence": 65,
+      "description": "Time unit errors (seconds, days, blocks)"
+    },
+    "infinite_loop": {
+      "regex": "for\\s*\\(\\s*;;\\s*\\)|while\\s*\\(\\s*true\\s*\\)|while\\s*\\(\\s*\\w+\\s*!=\\s*\\w+\\s*\\)",
+      "confidence": 75,
+      "description": "Infinite loop from non-advancing loop variable"
+    },
+    "bad_inheritance": {
+      "regex": "is\\s+\\w+,\\s*\\w+",
+      "confidence": 60,
+      "description": "Incorrect inheritance order (C3 linearization)"
+    },
+    "super_missing": {
+      "regex": "function\\s+\\w+\\s*\\(\\s*override\\s*\\)\\s*\\{[^s]",
+      "confidence": 60,
+      "description": "Overridden function missing super call"
+    },
+    "zero_address": {
+      "regex": "address\\s*\\(\\s*0\\s*\\)",
+      "confidence": 55,
+      "description": "Incorrect handling of address(0) inputs"
+    },
+    "zero_amount": {
+      "regex": "require\\s*\\(\\s*\\w+\\s*>\\s*0\\s*\\)|amount\\s*==\\s*0",
+      "confidence": 60,
+      "description": "Missing zero-value/amount checks"
+    },
+    "array_length_check": {
+      "regex": "function\\s+\\w+\\s*\\([^)]*\\[[^]]*\\][^)]*\\)",
+      "confidence": 60,
+      "description": "Missing input validation on array lengths"
+    },
+    "mismatched_arrays": {
+      "regex": "\\.length\\s*!=\\s*\\w+\\.length|\\.length\\s*>",
+      "confidence": 65,
+      "description": "Mismatched array lengths in batch functions"
+    },
+    "duplicate_entries": {
+      "regex": "for\\s*\\([^;]*;\\s*\\w+\\s*<\\s*\\w+\\.length[^;]*;\\s*\\w+\\s*\\+\\+\\s*\\)\\s*\\{[^}]*\\w+\\s*\\[",
+      "confidence": 60,
+      "description": "Duplicate entries in input arrays"
+    },
+    "self_transfer": {
+      "regex": "require\\s*\\(\\s*\\w+\\s*!=\\s*msg\\.sender\\s*\\)",
+      "confidence": 50,
+      "description": "Self-transfer or self-referential edge case check"
+    },
+    "type_max": {
+      "regex": "type\\s*\\(\\s*\\w+max\\s*\\)|type\\s*\\(\\s*\\w+min\\s*\\)",
+      "confidence": 55,
+      "description": "Incorrect handling of type(uint).max as sentinel"
+    },
+    "rounding_direction": {
+      "regex": "/\\s*\\d+\\s*\\)",
+      "confidence": 55,
+      "description": "Rounding direction favoring user instead of protocol"
+    },
+    "fee_calculation": {
+      "regex": "fee\\s*\\*\\s*\\d+\\s*/\\s*\\d+|fee\\s*/\\s*\\w+",
+      "confidence": 60,
+      "description": "Incorrect fee calculation or double fee charging"
+    },
+    "fee_skipped": {
+      "regex": "if\\s*\\(\\s*fee\\s*==\\s*0\\s*\\)|if\\s*\\(\\s*\\w+\\s*<\\s*\\w+\\s*\\)",
+      "confidence": 60,
+      "description": "Fees skipped on certain code paths"
+    },
+    "reward_accrual": {
+      "regex": "rewardIndex\\s*=\\s*|index\\s*\\*.*balance",
+      "confidence": 65,
+      "description": "Reward accrual errors (stale index, update before balance change)"
+    },
+    "reward_overdist": {
+      "regex": "claim.*emit|claimed.*true",
+      "confidence": 65,
+      "description": "Reward over-distribution or claiming twice"
+    },
+    "snapshot_timing": {
+      "regex": "snapshot\\s*\\(\\s*\\)\\s*\\w+\\.balanceOf|balanceOf.*block\\.number",
+      "confidence": 70,
+      "description": "Snapshot timing errors (balance read at wrong time)"
+    },
+    "event_emission": {
+      "regex": "emit\\s+\\w+\\s*\\(\\s*\\)|emit\\s+\\w+\\s*\\(\\s*;",
+      "confidence": 60,
+      "description": "Incorrect or missing event emission"
+    },
+    "hardcoded_address": {
+      "regex": "0x[0-9a-fA-F]{40}",
+      "confidence": 70,
+      "description": "Hardcoded addresses or magic numbers"
+    },
+    "inverted_msg_value_bytecode": {
+      "regex": "inverted_msg_value_check|has_imbalanced_eth_branches.*true|can_write_state_at_zero_value.*true",
+      "confidence": 90,
+      "description": "Bytecode-level detection of inverted msg.value check allowing 0-ETH state writes (setPriceFeeEth pattern)"
+    },
+    "unrestricted_write_withdraw_bytecode": {
+      "regex": "unrestricted_write_withdraw",
+      "confidence": 85,
+      "description": "SSTORE for price/fee without requiring msg.value \u2014 ETH printing vulnerability"
+    },
+    "conditional_logic_imbalanced_bytecode": {
+      "regex": "conditional_logic_with_imbalanced_requirements",
+      "confidence": 80,
+      "description": "If/else with msg.value check in one branch but not the other"
+    },
+    "external_call_no_state_guard_bytecode": {
+      "regex": "external_call_without_state_update|no_reentrancy_guard",
+      "confidence": 85,
+      "description": "External call without state update \u2014 reentrancy risk at bytecode level"
+    },
+    "value_transfer_without_check_bytecode": {
+      "regex": "value_transfer_without_value_check",
+      "confidence": 75,
+      "description": "ETH transfer without msg.value balance check"
+    }
+  },
+  "access_control": {
+    "no_modifier": {
+      "regex": "function\\s+\\w+\\s*\\([^)]*\\)\\s*(?:public|external)\\s*\\{[^m]*require",
+      "confidence": 70,
+      "description": "Missing access control modifier"
+    },
+    "wrong_modifier": {
+      "regex": "onlyOwner|onlyAdmin|onlyRole",
+      "confidence": 75,
+      "description": "Wrong access control modifier present"
+    },
+    "unprotected_initialize": {
+      "regex": "function\\s+initialize\\s*\\(\\s*\\)|function\\s+initializer",
+      "confidence": 90,
+      "description": "Unprotected initialize() - re-initializable contract"
+    },
+    "unprotected_selfdestruct": {
+      "regex": "selfdestruct\\s*\\(",
+      "confidence": 85,
+      "description": "Unprotected selfdestruct call"
+    },
+    "unprotected_state_change": {
+      "regex": "function\\s+\\w+\\s*\\([^)]*\\)\\s*(?:public|external)\\s*\\{[^;]*_mint|mint\\(|burn\\(|withdraw\\(|pause\\(",
+      "confidence": 75,
+      "description": "Unprotected mint, burn, pause, or withdraw functions"
+    },
+    "tx_origin": {
+      "regex": "tx\\.origin",
+      "confidence": 90,
+      "description": "tx.origin used for authentication"
+    },
+    "wrong_visibility": {
+      "regex": "function\\s+\\w+\\s*\\([^)]*\\)\\s*public\\s*\\(\\s*\\)",
+      "confidence": 60,
+      "description": "Default or wrong function visibility"
+    },
+    "admin_not_renounced": {
+      "regex": "owner\\s*=|transferOwnership",
+      "confidence": 65,
+      "description": "Leftover admin roles or owner not renounced"
+    },
+    "single_step_transfer": {
+      "regex": "_owner|owner\\s*=",
+      "confidence": 65,
+      "description": "Single-step ownership transfer - should be two-step"
+    },
+    "role_confusion": {
+      "regex": "getRoleAdmin|role\\.admin",
+      "confidence": 70,
+      "description": "Role confusion in AccessControl (admin of roles)"
+    },
+    "privilege_escalation": {
+      "regex": "grantRole|grant.*role",
+      "confidence": 75,
+      "description": "Privilege escalation through role granting"
+    },
+    "callback_no_auth": {
+      "regex": "onTokenTransfer|onERC721Received|onERC1155Received",
+      "confidence": 70,
+      "description": "Missing access control on callbacks/hooks"
+    },
+    "unauthorized_callback": {
+      "regex": "callback\\s*\\(\\s*\\)|receive\\s*\\(\\s*\\)",
+      "confidence": 65,
+      "description": "Unauthorized callback from untrusted contract"
+    },
+    "single_eoa_owner": {
+      "regex": "owner\\s*=\\s*msg\\.sender",
+      "confidence": 75,
+      "description": "Single EOA owner - centralization risk"
+    },
+    "multisig_misconfig": {
+      "regex": "multisig|multiSig|MultiSig",
+      "confidence": 60,
+      "description": "Multisig misconfiguration (threshold, owners)"
+    },
+    "timelock_missing": {
+      "regex": "TimelockController|updateDelay",
+      "confidence": 70,
+      "description": "Missing or bypassable timelock"
+    },
+    "emergency_drain": {
+      "regex": "emergency|circuitBreaker|pause\\s*\\(\\s*\\)",
+      "confidence": 65,
+      "description": "Emergency functions that can drain user funds"
+    },
+    "backdoor": {
+      "regex": "_hidden|_backdoor|_secret",
+      "confidence": 75,
+      "description": "Backdoor functions or hidden owner privileges"
+    },
+    "blocklist_bypass": {
+      "regex": "blocklist|blockList|_isBlocked|allowlist",
+      "confidence": 65,
+      "description": "Blocklist/allowlist bypass potential"
+    },
+    "sig_auth_no_role": {
+      "regex": "ecrecover|recover\\s*\\(",
+      "confidence": 70,
+      "description": "Signature-based authorization missing signer role check"
+    },
+    "insecure_delegation": {
+      "regex": "delegate|operator|approval.*delegate",
+      "confidence": 60,
+      "description": "Insecure delegation of authority (operators, approvals)"
+    },
+    "cross_function_auth": {
+      "regex": "require.*msg\\.sender|require.*only",
+      "confidence": 55,
+      "description": "Cross-function authorization inconsistency"
+    },
+    "front_runnable_claim": {
+      "regex": "claim\\s*\\(\\s*\\)\\s*\\{.*emit",
+      "confidence": 65,
+      "description": "Front-runnable ownership claim"
+    },
+    "factory_owner": {
+      "regex": "msg\\.sender.*msg\\.sender",
+      "confidence": 60,
+      "description": "Constructor sets owner to msg.sender of a factory"
+    },
+    "msg_sender_mismatch": {
+      "regex": "_msgSender",
+      "confidence": 60,
+      "description": "msg.sender vs _msgSender() mismatch in meta-tx contexts"
+    }
+  },
+  "external_call": {
+    "reentrancy_classic": {
+      "regex": "\\.call\\s*\\(",
+      "confidence": 85,
+      "description": "Low-level call - check if state update happens after or before (CEI violation)"
+    },
+    "reentrancy_cross_function": {
+      "regex": "\\.call\\{.*\\}.*\\n.*require\\.call|external.*call.*state",
+      "confidence": 80,
+      "description": "Cross-function reentrancy via low-level calls"
+    },
+    "reentrancy_callback": {
+      "regex": "onTokenTransfer|onERC721Received|onERC1155Received",
+      "confidence": 90,
+      "description": "Reentrancy callback pattern in external calls"
+    },
+    "read_only_reentrancy": {
+      "regex": "\\.call\\s*\\(\\s*\\\"\\\"\\)\\)|delegatecall.*balanceOf",
+      "confidence": 80,
+      "description": "Read-only reentrancy via view functions reading inconsistent state"
+    },
+    "erc777_hooks": {
+      "regex": "tokensReceived|tokentype.*hook",
+      "confidence": 85,
+      "description": "Reentrancy through ERC-777 hooks"
+    },
+    "erc721_received": {
+      "regex": "onERC721Received",
+      "confidence": 85,
+      "description": "Reentrancy through ERC-721 onERC721Received"
+    },
+    "erc1155_hook": {
+      "regex": "onERC1155Received",
+      "confidence": 85,
+      "description": "Reentrancy through ERC-1155 receiver hooks"
+    },
+    "eth_receive_fallback": {
+      "regex": "receive\\s*\\(\\s*\\)\\s*\\{|fallback\\s*\\(\\s*\\).*\\{",
+      "confidence": 75,
+      "description": "Reentrancy through ETH receive/fallback"
+    },
+    "flash_loan_reentry": {
+      "regex": "executeOperation|receiveFlashLoan|flashLoan",
+      "confidence": 90,
+      "description": "Reentrancy via flash loan callbacks"
+    },
+    "safe_mint_reentry": {
+      "regex": "safeMint|safeTransfer.*_hook",
+      "confidence": 85,
+      "description": "Reentrancy via safeMint/safeTransfer hooks"
+    },
+    "nonreentrant_gap": {
+      "regex": "nonReentrant|ReentrancyGuard",
+      "confidence": 70,
+      "description": "Reentrancy guard applied inconsistently"
+    },
+    "proxy_reentry": {
+      "regex": "delegatecall.*call|proxy.*call",
+      "confidence": 75,
+      "description": "Reentrancy across proxy and implementation"
+    },
+    "transfer_hook_reentry": {
+      "regex": "afterTokenTransfer",
+      "confidence": 75,
+      "description": "Reentrancy via tokens with transfer hooks"
+    },
+    "cei_violation": {
+      "regex": "\\.call\\s*\\(\\s*\\\"\\\"\\)|state\\s*=.*\\..*balance",
+      "confidence": 85,
+      "description": "State update after external call - checks-effects-interactions violation"
+    },
+    "governance_reentry": {
+      "regex": "execute.*call|propose.*execute",
+      "confidence": 70,
+      "description": "Reentrancy in governance execution"
+    },
+    "multicall_reentry": {
+      "regex": "multicall|aggregate",
+      "confidence": 65,
+      "description": "Reentrancy during multi-call batching"
+    },
+    "cross_chain_reentry": {
+      "regex": "ccip|lzSend|sendMessage",
+      "confidence": 75,
+      "description": "Cross-chain message callback reentrancy"
+    },
+    "tstore_reentry": {
+      "regex": "tstore|TSTORE|tload|TLOAD",
+      "confidence": 70,
+      "description": "Transient storage reentrancy lock misuse"
+    },
+    "unchecked_low_level_call": {
+      "regex": "\\.(call|send|transfer)\\s*\\(",
+      "confidence": 75,
+      "description": "Low-level external call without return value check"
+    },
+    "unchecked_return": {
+      "regex": "\\.call\\s*\\(\\s*\\\"\\\"\\)\\)|msg\\.data\\s*\\)",
+      "confidence": 85,
+      "description": "Unchecked return value of low-level call"
+    },
+    "unchecked_send_transfer": {
+      "regex": "\\.send\\s*\\(|\\.transfer\\s*\\(",
+      "confidence": 80,
+      "description": "Unchecked send/transfer (also 2300 gas stipend)"
+    },
+    "erc20_return": {
+      "regex": "transfer\\s*\\(\\s*[^)]*\\)\\s*;.*transfer\\s*\\(\\s*[^)]*\\)\\s*\\n\\s*;",
+      "confidence": 75,
+      "description": "Unchecked ERC-20 transfer return value"
+    },
+    "gas_stipend": {
+      "regex": "\\.transfer\\s*\\(|\\.send\\s*\\(",
+      "confidence": 70,
+      "description": "transfer/send 2300 gas stipend failures"
+    },
+    "untrusted_call": {
+      "regex": "\\.(call|callcode)\\s*\\(\\s*msg\\.(data|sender|value)",
+      "confidence": 75,
+      "description": "Calling untrusted external contracts with user data"
+    },
+    "delegatecall_untrusted": {
+      "regex": "delegatecall\\s*\\(\\s*msg|(delegatecall)",
+      "confidence": 90,
+      "description": "Delegatecall to untrusted or user-controlled address"
+    },
+    "delegatecall_storage": {
+      "regex": "delegatecall\\s*\\(\\s*\\)",
+      "confidence": 80,
+      "description": "Delegatecall storage context confusion"
+    },
+    "nonexistent_call": {
+      "regex": "\\.call\\s*\\(\\s*\\\"\\\"",
+      "confidence": 60,
+      "description": "Call to non-existent contract (call succeeds with no code)"
+    },
+    "returndata_bomb": {
+      "regex": "returndatacopy.*length|\\.copy\\(returndata",
+      "confidence": 60,
+      "description": "Return data bomb (huge returndata copying)"
+    },
+    "gas_griefing": {
+      "regex": "gas\\s*\\(\\s*\\)|gasleft",
+      "confidence": 55,
+      "description": "Gas griefing via insufficient gas forwarding"
+    },
+    "callee_gas_drain": {
+      "regex": "\\.call\\s*\\(\\s*\\{.*gas\\s*:\\s*\\}",
+      "confidence": 65,
+      "description": "Callee consuming all gas via gas limit"
+    },
+    "loop_external": {
+      "regex": "for\\s*\\(.*\\)\\s*\\{.*\\..*call\\s*\\(.*\\)\\s*\\}",
+      "confidence": 80,
+      "description": "External call in a loop"
+    },
+    "malicious_assumption": {
+      "regex": "\\.call\\s*\\(\\s*\\\"\\\"\\)|external.*call.*assume",
+      "confidence": 70,
+      "description": "Assumption that external contract is not malicious"
+    },
+    "upgradable_dependency": {
+      "regex": "address\\s*\\(\\s*\\w+\\s*\\)",
+      "confidence": 65,
+      "description": "Dependency on external contract that can be upgraded or selfdestructed"
+    },
+    "staticcall_violation": {
+      "regex": "staticcall\\s*\\(\\s*\\)",
+      "confidence": 60,
+      "description": "staticcall assumptions violated"
+    },
+    "phantom_fallback": {
+      "regex": "fallback\\s*\\(\\s*\\{.*revert|receive\\s*\\(\\s*\\{.*emit",
+      "confidence": 65,
+      "description": "Phantom functions or fallback matching unexpected selectors"
+    },
+    "selector_collision": {
+      "regex": "bytes4\\s*\\(\\s*keccak256\\s*\\(\\s*\\\"0x",
+      "confidence": 55,
+      "description": "Function selector collision potential"
+    },
+    "returndata_mishandled": {
+      "regex": "abi\\.decode|returndata",
+      "confidence": 60,
+      "description": "Incorrect ABI decoding of returned data"
+    },
+    "try_catch_swallow": {
+      "regex": "try\\s*\\{|catch\\s*\\(\\s*\\)",
+      "confidence": 65,
+      "description": "try/catch swallowing errors or mishandling reverts"
+    },
+    "catch_revert": {
+      "regex": "catch\\s*\\(\\s*\\)",
+      "confidence": 65,
+      "description": "Catch block not reverting state properly"
+    },
+    "precompile_call": {
+      "regex": "to\\s*==\\s*0x0[0-9a-fA-F]{38}|precompile",
+      "confidence": 60,
+      "description": "Low-level call to precompile with wrong assumptions"
+    },
+    "construction_call": {
+      "regex": "extcodesize\\s*\\(\\s*msg\\.sender\\s*\\)|extcodesize\\s*\\(\\s*address",
+      "confidence": 70,
+      "description": "Calling contract during construction (extcodesize == 0 bypass)"
+    },
+    "is_contract_bypass": {
+      "regex": "extcodesize\\s*\\(\\s*\\w+\\s*\\)|isContract",
+      "confidence": 75,
+      "description": "extcodesize/isContract checks bypassed"
+    },
+    "eip4337_eao": {
+      "regex": "tx\\.origin\\s*==\\s*msg\\.sender|require\\s*\\(\\s*tx\\.origin\\s*==",
+      "confidence": 70,
+      "description": "Contract wallet/EAO assumptions broken (ERC-4337, EIP-7702)"
+    },
+    "eip7702": {
+      "regex": "Authorization|authorization",
+      "confidence": 70,
+      "description": "EIP-7702 delegated EOAs breaking tx.origin == msg.sender assumptions"
+    }
+  },
+  "arithmetic": {
+    "unchecked_arithmetic_pre08": {
+      "regex": "pragma solidity\\s+\\^0\\.[0-7]|pragma solidity\\s+0\\.[0-7]",
+      "confidence": 75,
+      "description": "Solidity <0.8 without SafeMath - unchecked arithmetic"
+    },
+    "unchecked_block_pre08": {
+      "regex": "unchecked\\s*\\{",
+      "confidence": 80,
+      "description": "Explicit unchecked block - arithmetic overflow risk"
+    },
+    "overflow_assembly": {
+      "regex": "assembly\\s*\\{.*add|assembly\\s*\\{.*mul",
+      "confidence": 75,
+      "description": "Overflow in inline assembly"
+    },
+    "unsafe_downcast": {
+      "regex": "uint128\\s*\\(\\s*\\w+\\s*\\)|uint96\\s*\\(\\s*\\w+\\s*\\)|SafeCast",
+      "confidence": 70,
+      "description": "Unsafe downcasting (uint256 to uint128/96)"
+    },
+    "signed_unsigned": {
+      "regex": "int\\s*\\(\\s*uint|uint\\s*\\(\\s*int",
+      "confidence": 65,
+      "description": "Signed/unsigned conversion errors"
+    },
+    "div_before_mul": {
+      "regex": "/\\s*\\w+\\s*\\*\\s*|amount\\s*/\\s*",
+      "confidence": 70,
+      "description": "Division before multiplication - precision loss"
+    },
+    "div_by_zero": {
+      "regex": "/\\s*0\\b|/\\s*\\w+\\s*;|require\\s*\\(\\s*\\w+\\s*>\\s*0\\s*\\).*\\/",
+      "confidence": 65,
+      "description": "Division by zero risk"
+    },
+    "rounding_exploit": {
+      "regex": "mul\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\)\\s*/",
+      "confidence": 60,
+      "description": "Rounding errors exploitable via repeated small operations"
+    },
+    "truncation": {
+      "regex": "toUint\\s*\\(\\s*\\w+\\.from\\s*\\)|/.*\\d+\\s*\\)",
+      "confidence": 60,
+      "description": "Truncation to zero in small-amount operations"
+    },
+    "phantom_overflow": {
+      "regex": "a\\s*\\*\\s*b\\s*/\\s*c|a\\s*/\\s*b\\s*\\*\\s*c",
+      "confidence": 65,
+      "description": "Phantom overflow in a*b/c"
+    },
+    "exponentiation_overflow": {
+      "regex": "\\*\\*\\s*\\d+\\s*\\(|pow\\s*\\(\\s*\\w+\\s*,\\s*\\d+\\s*\\)",
+      "confidence": 70,
+      "description": "Exponentiation overflow"
+    },
+    "decimal_normalization": {
+      "regex": "decimals\\s*\\(\\s*\\)\\s*10\\s*\\*\\*|10\\s*\\*\\*\\s*decimals",
+      "confidence": 60,
+      "description": "Decimal normalization errors between tokens"
+    },
+    "fixed_point": {
+      "regex": "ABDKMath|DSMath|FixedPoint",
+      "confidence": 60,
+      "description": "Fixed-point math library usage - verify correct usage"
+    },
+    "basis_points": {
+      "regex": "/\\s*100\\b|/ 100 |bps\\s*=",
+      "confidence": 55,
+      "description": "Incorrect percentage or basis points math"
+    },
+    "compound_interest": {
+      "regex": "rate\\s*\\*\\s*time|interest.*compound",
+      "confidence": 55,
+      "description": "Compound interest approximation errors"
+    },
+    "negative_number": {
+      "regex": "int\\s+\\w+\\s*=|abs\\s*\\(",
+      "confidence": 55,
+      "description": "Negative number handling in int math"
+    },
+    "abs_overflow": {
+      "regex": "abs\\s*\\(\\s*|type\\s*\\(\\s*int.*min\\s*\\)",
+      "confidence": 65,
+      "description": "Absolute value overflow of type(int).min"
+    },
+    "share_asset_rounding": {
+      "regex": "totalSupply.*balance|convertToShares|convertToAssets",
+      "confidence": 70,
+      "description": "Share/asset conversion rounding errors"
+    },
+    "amm_rounding": {
+      "regex": "x\\s*\\*\\s*y|k\\s*=|invariant",
+      "confidence": 60,
+      "description": "Rounding exploitation in AMM invariants"
+    },
+    "dust_stuck": {
+      "regex": "balance\\s*==\\s*0|balanceOf\\s*\\(\\s*this\\s*\\)",
+      "confidence": 55,
+      "description": "Dust amount stuck in contracts"
+    },
+    "precision_loss": {
+      "regex": "lowDecimal|low_decimals|decimals\\s*<\\s*10",
+      "confidence": 55,
+      "description": "Precision loss from low-decimal tokens"
+    },
+    "balance_ratio_manipulation": {
+      "regex": "balanceOf\\s*\\([^)]*\\)\\s*[*\\/]\\s*balanceOf",
+      "confidence": 80,
+      "description": "Arithmetic on token balances for ratios - vulnerable to manipulation"
+    }
+  },
+  "gas": {
+    "unbounded_loop": {
+      "regex": "for\\s*\\([^;]*;\\s*\\w+\\.length",
+      "confidence": 75,
+      "description": "Loop iterating over dynamic-length array - gas exhaustion risk"
+    },
+    "unbounded_array_iteration": {
+      "regex": "\\.length\\s*(?:;|\\s*\\)\\s*\\{)",
+      "confidence": 70,
+      "description": "Array length used in loop condition - bounded by array size"
+    },
+    "push_not_pull": {
+      "regex": "\\.call\\s*\\(\\s*\\{.*value\\s*:\\s*\\w+\\s*\\)",
+      "confidence": 70,
+      "description": "Failing external call blocking entire function (push over pull)"
+    },
+    "receive_revert": {
+      "regex": "receive\\s*\\(\\s*\\)\\s*\\{.*revert|fallback\\s*\\(\\s*{.*revert",
+      "confidence": 75,
+      "description": "Revert in receive/fallback blocking payouts"
+    },
+    "force_sent_eth": {
+      "regex": "selfdestruct|address\\s*\\(\\s*\\)\\s*\\.transfer",
+      "confidence": 65,
+      "description": "Force-sent ETH breaking balance invariants"
+    },
+    "donation_break": {
+      "regex": "\\.transfer\\s*\\(\\s*address\\s*\\(\\s*this\\s*\\)|balance\\s*==\\s*",
+      "confidence": 70,
+      "description": "Donation of tokens breaking exact-balance checks"
+    },
+    "dust_deposit": {
+      "regex": "minAmount\\s*|min\\s*\\d+",
+      "confidence": 60,
+      "description": "Griefing via dust deposits"
+    },
+    "small_positions": {
+      "regex": "positionCount|numPositions",
+      "confidence": 55,
+      "description": "Griefing via many small positions"
+    },
+    "blocklisted_token": {
+      "regex": "USDC|blocklist|_blocked",
+      "confidence": 60,
+      "description": "Blocklisted token address blocking withdrawals"
+    },
+    "pausable_token": {
+      "regex": "whenNotPaused|whenPaused",
+      "confidence": 55,
+      "description": "Pausable tokens blocking protocol flows"
+    },
+    "locked_funds": {
+      "regex": "this\\.balance|\\.transfer\\s*\\(\\s*owner",
+      "confidence": 70,
+      "description": "Locked funds: no withdraw path or ETH stuck"
+    },
+    "array_removal_dos": {
+      "regex": "pop\\s*\\(\\s*\\)|delete\\s*\\(\\s*\\w+\\s*\\[",
+      "confidence": 60,
+      "description": "Array removal causing DoS"
+    },
+    "keeper_griefing": {
+      "regex": "keeper|liquidator",
+      "confidence": 55,
+      "description": "Griefing of keepers or liquidators"
+    },
+    "admin_key_loss": {
+      "regex": "owner|admin.*lost|multiSig.*lost",
+      "confidence": 55,
+      "description": "Admin key loss causing permanent lock"
+    },
+    "storage_bloat": {
+      "regex": "mapping\\s*\\(\\s*\\)\\s*\\w+\\s+;|array\\.push",
+      "confidence": 60,
+      "description": "Storage bloat attacks on mappings/arrays"
+    },
+    "zero_transfer_revert": {
+      "regex": "require\\s*\\(\\s*\\w+\\s*>\\s*0\\s*\\)|transfer.*require\\s*\\(\\s*0",
+      "confidence": 60,
+      "description": "Revert on zero-amount transfers breaking flows"
+    }
+  },
+  "signature_replay": {
+    "no_nonce": {
+      "regex": "ecrecover|recover\\s*\\(",
+      "confidence": 85,
+      "description": "Signature replay - missing nonce"
+    },
+    "no_chain_id": {
+      "regex": "CHAINID|chainid|chain.*id",
+      "confidence": 80,
+      "description": "Cross-chain replay - missing chain ID in domain"
+    },
+    "no_contract_domain": {
+      "regex": "DOMAIN_SEPARATOR|domainSeparator",
+      "confidence": 75,
+      "description": "Cross-contract replay - missing verifying contract in domain"
+    },
+    "no_eip712": {
+      "regex": "EIP712|Permit|ec recover",
+      "confidence": 70,
+      "description": "Missing EIP-712 domain separation"
+    },
+    "malleability": {
+      "regex": "ecrecover.*signature|v\\s*>\\s*|27\\s*\\\\|\\|\\s*28|\\\\bs\\s*>\\s*",
+      "confidence": 80,
+      "description": "Signature malleability (s-value, v-value)"
+    },
+    "ecrecover_zero": {
+      "regex": "ecrecover.*==.*0|==\\s*address\\s*\\(\\s*0\\s*\\)|==\\s*0x0",
+      "confidence": 75,
+      "description": "ecrecover returning address(0) on invalid signature"
+    },
+    "no_expiry": {
+      "regex": "deadline\\s*=\\s*|expires.*=|nonce.*timestamp",
+      "confidence": 70,
+      "description": "Missing signature expiry/deadline"
+    },
+    "reuse": {
+      "regex": "used.*nonce|nonce.*mapped|nonces\\s*\\[",
+      "confidence": 70,
+      "description": "Signature reuse after cancellation"
+    },
+    "wrong_signer": {
+      "regex": "signer\\s*=|signer\\s*==|validSigner",
+      "confidence": 70,
+      "description": "Wrong signer verification - not checking authorized signer"
+    },
+    "encode_packed_collision": {
+      "regex": "abi\\.encodePacked",
+      "confidence": 75,
+      "description": "abi.encodePacked hash collision with dynamic types"
+    },
+    "weak_hash": {
+      "regex": "sha256\\s*\\(\\s*\\w+\\s*\\)\\s*.*==|keccak256.*block\\.number|hash.*timestamp",
+      "confidence": 65,
+      "description": "Weak or custom hash construction"
+    },
+    "erc1271_mismatch": {
+      "regex": "isValidSignature|ERC1271",
+      "confidence": 65,
+      "description": "ERC-1271 smart-contract signature handling errors"
+    },
+    "permit_frontrun": {
+      "regex": "permit\\s*\\(\\s*\\)",
+      "confidence": 70,
+      "description": "Permit front-running causing transaction revert (DoS on permit)"
+    },
+    "permit_phishing": {
+      "regex": "permit.*phish|permit.*domain",
+      "confidence": 60,
+      "description": "Malicious permit phishing signatures"
+    },
+    "nonce_before_call": {
+      "regex": "nonce\\s*\\+\\s*\\+|\\.increment\\(|nonce\\s*\\+\\+",
+      "confidence": 65,
+      "description": "Missing nonce increment before external call"
+    },
+    "merkle_preimage": {
+      "regex": "merkle|verify.*leaf|verify.*proof",
+      "confidence": 65,
+      "description": "Merkle proof second-preimage attack (leaf/node ambiguity)"
+    },
+    "merkle_duplicate": {
+      "regex": "merkle.*duplicate|leaf.*collision",
+      "confidence": 60,
+      "description": "Merkle tree duplicate-leaf or unsorted-pair issues"
+    },
+    "merkle_reuse": {
+      "regex": "claimed\\s*\\[.*\\]|claimed.*Hash",
+      "confidence": 65,
+      "description": "Merkle proof reuse across claims (no claimed bitmap)"
+    },
+    "weak_commit": {
+      "regex": "commit.*reveal|reveal.*commit",
+      "confidence": 60,
+      "description": "Commit-reveal scheme with weak commitments"
+    },
+    "low_entropy": {
+      "regex": "keccak256.*address\\s*\\(\\s*msg\\.sender|hash.*now",
+      "confidence": 60,
+      "description": "keccak256 with insufficient entropy (guessable inputs)"
+    },
+    "compact_sig": {
+      "regex": "compact|shortSignature|sigR.*sigS.*sigV",
+      "confidence": 60,
+      "description": "Compact signatures (EIP-2098) parsing mistakes"
+    },
+    "key_compromise": {
+      "regex": "signer.*private|signer.*key",
+      "confidence": 55,
+      "description": "Off-chain signer key compromise"
+    },
+    "wrong_msg_fields": {
+      "regex": "digest\\s*=|hash.*msg\\.",
+      "confidence": 65,
+      "description": "Signature verified over wrong message fields (partial coverage)"
+    },
+    "sig_length": {
+      "regex": "signature\\.length|\\.length\\s*!=\\s*65",
+      "confidence": 60,
+      "description": "Missing check for signature length"
+    }
+  },
+  "proxy": {
+    "uninitialized_impl": {
+      "regex": "_implementation\\s*\\(\\s*\\)|implementation\\s*\\(\\s*\\)",
+      "confidence": 80,
+      "description": "Uninitialized implementation contract"
+    },
+    "uninitialized_proxy": {
+      "regex": "_proxy|salt\\s*=|create2",
+      "confidence": 75,
+      "description": "Uninitialized proxy or CREATE2 redeployment"
+    },
+    "reinitializable": {
+      "regex": "initializer|__Setup",
+      "confidence": 85,
+      "description": "Re-initialization via initializer misuse"
+    },
+    "storage_collision": {
+      "regex": "bytes32\\s+\\w+\\s*=|uint\\s+\\w+\\s*;",
+      "confidence": 70,
+      "description": "Storage layout collision between proxy and implementation"
+    },
+    "storage_change": {
+      "regex": "_gap|__gap",
+      "confidence": 65,
+      "description": "Storage layout change breaking upgrades"
+    },
+    "no_storage_gaps": {
+      "regex": "uint256\\[[0-9]+\\]\\s+private\\s+_reserved",
+      "confidence": 60,
+      "description": "Missing storage gaps in upgradeable base contracts"
+    },
+    "selector_clash": {
+      "regex": "function\\s+\\w+\\s*\\(\\s*\\).*selector|selector.*clash",
+      "confidence": 60,
+      "description": "Function selector clash between proxy and implementation"
+    },
+    "uuPS_no_auth": {
+      "regex": "_authorizeUpgrade.*\\{.*\\).|onlyProxy",
+      "confidence": 80,
+      "description": "UUPS missing or flawed _authorizeUpgrade"
+    },
+    "uuPS_selfdestruct": {
+      "regex": "selfdestruct\\s*\\(\\s*address\\s*\\(\\s*this\\s*\\)",
+      "confidence": 75,
+      "description": "UUPS implementation selfdestruct bricking the proxy"
+    },
+    "transparent_admin": {
+      "regex": "admin\\s*\\(\\s*\\)|implementation\\s*\\(\\s*\\)",
+      "confidence": 70,
+      "description": "Transparent proxy admin confusion"
+    },
+    "beacon_upgrade": {
+      "regex": "changeBeacon|upgradeTo|beacon",
+      "confidence": 75,
+      "description": "Beacon proxy upgrade abuse"
+    },
+    "constructor_in_upgrade": {
+      "regex": "constructor\\s*\\(\\s*\\)",
+      "confidence": 70,
+      "description": "Constructor logic in upgradeable contracts"
+    },
+    "create2_abuse": {
+      "regex": "create2.*salt|new\\s+\\w+\\s*\\{\\s*\\}",
+      "confidence": 70,
+      "description": "CREATE2 address precomputation abuse"
+    },
+    "init_front_run": {
+      "regex": "initialize\\s*\\(\\s*\\)",
+      "confidence": 75,
+      "description": "Initialization front-running of factory-deployed clones"
+    },
+    "no_migration": {
+      "regex": "upgradeToAndCall\\s*\\(\\s*\\)",
+      "confidence": 65,
+      "description": "Upgrade without storage migration"
+    },
+    "diamond_collision": {
+      "regex": "facetAddress\\s*\\(\\s*\\)|facets\\s*\\[",
+      "confidence": 70,
+      "description": "Diamond facet storage collisions"
+    },
+    "diamond_overwrite": {
+      "regex": "facet.*selector|diamondCut",
+      "confidence": 65,
+      "description": "Diamond facet selector overwrite"
+    }
+  },
+  "timestamp": {
+    "block_timestamp_manipulation": {
+      "regex": "block\\.timestamp",
+      "confidence": 75,
+      "description": "block.timestamp - vulnerable to miner manipulation in time-dependent logic"
+    },
+    "block_number_dependence": {
+      "regex": "block\\.number",
+      "confidence": 70,
+      "description": "block.number - predictable in MEV contexts"
+    },
+    "weak_randomness": {
+      "regex": "blockhash\\s*\\(\\s*block\\.number|now\\s*%|keccak256.*block\\.number",
+      "confidence": 90,
+      "description": "Weak randomness from blockhash/timestamp/difficulty"
+    },
+    "predictable_randomness": {
+      "regex": "random.*=\\s*keccak256|pseudoRandom",
+      "confidence": 80,
+      "description": "Predictable randomness from on-chain state"
+    },
+    "miner_manipulation": {
+      "regex": "block\\.timestamp.*<|block\\.timestamp.*>|now.*require",
+      "confidence": 85,
+      "description": "Miner/validator manipulation of timestamp in critical logic"
+    },
+    "blockhash_beyond_256": {
+      "regex": "blockhash\\s*\\(\\s*block\\.number\\s*-\\s*[2-9]\\d\\d|block\\.number\\s*-\\s*\\d{3,}",
+      "confidence": 80,
+      "description": "blockhash returns zero beyond 256 blocks"
+    },
+    "l2_time_mismatch": {
+      "regex": "block\\.number.*Arbitrum|block\\.timestamp.*Optimism|L2.*timestamp",
+      "confidence": 75,
+      "description": "block.number/timestamp mismatch on L2"
+    },
+    "gas_price_dependence": {
+      "regex": "tx\\.gasprice|gasprice.*>|require\\s*\\(\\s*gasprice",
+      "confidence": 65,
+      "description": "Gas price/tx.gasprice dependence"
+    },
+    "gasleft_dependence": {
+      "regex": "gasleft\\s*\\(\\s*\\).*require|gasleft.*<",
+      "confidence": 60,
+      "description": "gasleft() dependence"
+    },
+    "hardcoded_chain_id": {
+      "regex": "chainid\\s*==\\s*\\d+|block\\.chainid\\s*!=\\s*\\d+",
+      "confidence": 65,
+      "description": "Chain ID hardcoded or assumed"
+    },
+    "hard_fork_replay": {
+      "regex": "chainId.*==.*0x|CHAINID.*==.*1",
+      "confidence": 60,
+      "description": "Hard fork chain-split replay risk"
+    },
+    "l2_opcode": {
+      "regex": "PUSH0|extcodehash|TLOAD|TSTORE",
+      "confidence": 55,
+      "description": "L2-specific opcodes not supported on all chains"
+    },
+    "evm_behavior_diff": {
+      "regex": "gas.*cost.*different|precompile.*different",
+      "confidence": 55,
+      "description": "Different EVM behavior across chains"
+    },
+    "selfdestruct_change": {
+      "regex": "selfdestruct|SELFDESTRUCT",
+      "confidence": 70,
+      "description": "selfdestruct behavior change after EIP-6780 (Dencun)"
+    },
+    "coinbase_assumption": {
+      "regex": "block\\.coinbase|cointbase",
+      "confidence": 55,
+      "description": "Assumptions about block.coinbase"
+    }
+  },
+  "front_running": {
+    "tx_ordering_dependence": {
+      "regex": "block\\.timestamp.*block\\.timestamp|nonce.*next",
+      "confidence": 75,
+      "description": "Transaction ordering dependence"
+    },
+    "approve_frontrun": {
+      "regex": "approve\\s*\\(\\s*.*spender.*amount",
+      "confidence": 80,
+      "description": "Front-running approvals"
+    },
+    "commit_reveal_frontrun": {
+      "regex": "commit.*reveal|reveal.*commit",
+      "confidence": 70,
+      "description": "Front-running reveals in commit-reveal schemes"
+    },
+    "init_frontrun": {
+      "regex": "initialize\\s*\\(\\s*\\)",
+      "confidence": 75,
+      "description": "Front-running initialization"
+    },
+    "liquidity_frontrun": {
+      "regex": "addLiquidity.*amount|provide\\.liquidity",
+      "confidence": 70,
+      "description": "Front-running liquidity addition"
+    },
+    "ownership_frontrun": {
+      "regex": "transferOwnership.*claimOwnership|renounce.*await",
+      "confidence": 75,
+      "description": "Front-running ownership transfers"
+    },
+    "oracle_backrun": {
+      "regex": "oracle.*update|feed.*update.*back",
+      "confidence": 70,
+      "description": "Back-running oracle updates"
+    },
+    "priority_gas_auction": {
+      "regex": "gasPrice.*>|maxFeePerGas.*>|priority.*fee",
+      "confidence": 65,
+      "description": "Priority gas auction abuse"
+    },
+    "private_mempool": {
+      "regex": "mempool|private.*rpc|flashbots",
+      "confidence": 60,
+      "description": "Private mempool dependency assumptions"
+    },
+    "time_bandit": {
+      "regex": "reorg.*chain|finality.*<.*block",
+      "confidence": 70,
+      "description": "Time-bandit / reorg attacks"
+    },
+    "same_block_multi": {
+      "regex": "multicall.*sameBlock|aggregate.*batch",
+      "confidence": 65,
+      "description": "Same-block multi-call exploits"
+    }
+  },
+  "compiler": {
+    "known_compiler_bug": {
+      "regex": "pragma solidity\\s+\\^0\\.[0-7]|pragma solidity\\s+0\\.[0-7]",
+      "confidence": 70,
+      "description": "Outdated compiler version with known bugs"
+    },
+    "floating_pragma": {
+      "regex": "pragma solidity\\s+\\^",
+      "confidence": 65,
+      "description": "Floating pragma (^0.8.0) - allows newer versions with breaking changes"
+    },
+    "optimizer_bug": {
+      "regex": "optimizer.*enabled|optimizer.*runs",
+      "confidence": 55,
+      "description": "Optimizer bugs - verify settings"
+    },
+    "deprecated_function": {
+      "regex": "suicide\\s*\\(|throw\\s*;|\\bsha3\\s*\\(|callcode\\s*\\(",
+      "confidence": 80,
+      "description": "Deprecated functions (suicide, throw, callcode, sha3)"
+    },
+    "var_typo": {
+      "regex": "\\bvar\\s+\\w+\\s*=",
+      "confidence": 60,
+      "description": "Use of var and implicit typing (old versions)"
+    },
+    "constructor_naming": {
+      "regex": "function\\s+\\w+\\s*\\(\\s*\\)\\s*(?:public|internal)\\s*\\{[^p].*payable",
+      "confidence": 60,
+      "description": "Constructor naming bug (old versions)"
+    },
+    "missing_payable": {
+      "regex": "function\\s+\\w+\\s*\\(\\s*\\).*external\\s*\\{.*msg\\.value",
+      "confidence": 70,
+      "description": "Missing payable / unexpected payable functions"
+    },
+    "unhandled_eth": {
+      "regex": "receive\\s*\\(\\s*\\)\\s*\\{|fallback\\s*\\(\\s*{.*selfdestruct",
+      "confidence": 65,
+      "description": "Contract accepting ETH with no withdrawal path"
+    },
+    "fallback_gas": {
+      "regex": "fallback\\s*\\(\\s*{[^g]*gas",
+      "confidence": 60,
+      "description": "Fallback function gas assumptions"
+    },
+    "interface_mismatch": {
+      "regex": "interface\\s+\\w+\\s*{[^}]*function\\s+\\w+\\s*\\(\\s*private\\s*\\)",
+      "confidence": 60,
+      "description": "Interface mismatch - declared vs actual function signatures"
+    },
+    "interface_no_returns": {
+      "regex": "interface\\s+\\w+\\s*{[^}]*function\\s+\\w+\\s*\\(\\s*\\)",
+      "confidence": 55,
+      "description": "Interface missing return value declarations"
+    },
+    "erc165_error": {
+      "regex": "supportsInterface\\s*\\(\\s*\\)",
+      "confidence": 55,
+      "description": "Incorrect interface ID / ERC-165 handling"
+    },
+    "abstract_unimplemented": {
+      "regex": "abstract\\s+contract\\s+\\w+\\s*\\{",
+      "confidence": 60,
+      "description": "Abstract function left unimplemented"
+    },
+    "event_indexing": {
+      "regex": "event\\s+\\w+\\s*\\([^)]*\\)\\s*;.*event\\s+\\w+\\s*\\(\\s*[\\w]+\\s*\\)",
+      "confidence": 60,
+      "description": "Event parameter indexing mistakes - non-indexed params"
+    },
+    "custom_error_leak": {
+      "regex": "revert\\s+\\w+\\s*\\(\\s*\\)|error\\s+\\w+\\s*\\(",
+      "confidence": 55,
+      "description": "Custom error/revert string leaking information"
+    },
+    "immutable_init": {
+      "regex": "immutable\\s+\\w+\\s*=|constant\\s+\\w+\\s*=",
+      "confidence": 55,
+      "description": "Constants/immutables initialized wrongly"
+    },
+    "linearized_collision": {
+      "regex": "is\\s+\\w+,\\s*\\w+,\\s*\\w+",
+      "confidence": 60,
+      "description": "Linearized inheritance with state variable collisions"
+    },
+    "library_internal": {
+      "regex": "library\\s+\\w+\\s*\\{.*internal",
+      "confidence": 55,
+      "description": "Library function internal vs external misunderstanding"
+    },
+    "library_linking": {
+      "regex": "using\\s+for\\s*;|library.*link",
+      "confidence": 60,
+      "description": "Library linking errors (unlinked or wrong address)"
+    },
+    "this_call": {
+      "regex": "this\\.(\\w+)\\s*\\(\\s*\\)",
+      "confidence": 55,
+      "description": "Using this. calls unnecessarily (extra external call)"
+    },
+    "struct_visibility": {
+      "regex": "struct\\s+\\w+\\s*\\{.*\\bpublic\\b|struct\\s+\\w+\\s*\\{.*\\binternal\\b",
+      "confidence": 55,
+      "description": "Visibility of struct/enum assumptions"
+    },
+    "overloaded_ambig": {
+      "regex": "function\\s+\\w+\\s*\\(\\s*uint\\s*\\)|function\\s+\\w+\\s*\\(\\s*int\\s*\\)",
+      "confidence": 60,
+      "description": "Overloaded function ambiguity"
+    },
+    "unused_vars": {
+      "regex": "// TODO|// FIXME",
+      "confidence": 55,
+      "description": "Unused/uninitialized variables or TODOs in prod"
+    },
+    "docs_spec_mismatch": {
+      "regex": "NatSpec|///.*@param",
+      "confidence": 50,
+      "description": "Lack of NatSpec or unclear spec leading to misuse"
+    },
+    "test_in_prod": {
+      "regex": "console\\.log|// test|// debug",
+      "confidence": 80,
+      "description": "Test code or debug functions left in production"
+    },
+    "hardcoded_secret": {
+      "regex": "PRIVATE_KEY|private.*key.*=|secret.*=.*0x",
+      "confidence": 90,
+      "description": "Hardcoded private keys or secrets in source"
+    },
+    "verification_mismatch": {
+      "regex": "bytecode.*mismatch|contract.*address\\s*\\!\\=\\s*.*runtime",
+      "confidence": 70,
+      "description": "Verification mismatch (deployed bytecode differs from published source)"
+    }
+  },
+  "assembly": {
+    "memory_unsafe": {
+      "regex": "assembly\\s*\\{.*mstore.*mload|assembly\\s*\\{.*\\bmsize\\b",
+      "confidence": 80,
+      "description": "Memory-unsafe assembly annotated as memory-safe"
+    },
+    "wrong_mload": {
+      "regex": "mload\\s*\\(\\s*0x|0x40\\s*\\+|mload.*0x40.*add",
+      "confidence": 70,
+      "description": "Incorrect mload/mstore offsets"
+    },
+    "wrong_calldataload": {
+      "regex": "calldataload\\s*\\(\\s*[^4|]calldataload.*0x4\\s*\\+",
+      "confidence": 70,
+      "description": "Incorrect calldataload offsets"
+    },
+    "dirty_bits": {
+      "regex": "mask.*gas|and.*gas|gas.*and\\s*\\(",
+      "confidence": 65,
+      "description": "Missing cleanup of upper bits in assembly"
+    },
+    "returndata_mishandle": {
+      "regex": "returndatasize.*returndatacopy|returndatacopy.*size",
+      "confidence": 70,
+      "description": "Wrong returndatasize/returndatacopy handling"
+    },
+    "create2_handle": {
+      "regex": "create2.*==.*0|extcodesize.*create2",
+      "confidence": 70,
+      "description": "Wrong create/create2 return handling (zero address)"
+    },
+    "salt_collision": {
+      "regex": "create2.*salt\\s*=|salt.*create2",
+      "confidence": 65,
+      "description": "create2 salt collisions"
+    },
+    "assembly_revert": {
+      "regex": "revert\\s*\\(\\s*\\(.*\\)",
+      "confidence": 60,
+      "description": "Assembly revert with improper data"
+    },
+    "slot_error": {
+      "regex": "sload.*keccak|storage.*slot.*\\+|slot.*packing",
+      "confidence": 75,
+      "description": "Assembly storage slot computation errors"
+    },
+    "delegatecall_bug": {
+      "regex": "delegatecall.*forward|return.*delegatecall",
+      "confidence": 70,
+      "description": "Assembly delegatecall forwarding bugs"
+    },
+    "extcodehash": {
+      "regex": "extcodehash\\s*\\(\\s*\\)|eq\\s*\\(\\s*extcodehash",
+      "confidence": 65,
+      "description": "Incorrect use of extcodehash for address checks"
+    }
+  },
+  "bridge": {
+    "message_validation": {
+      "regex": "validate.*message|message.*valid|trustedRemote",
+      "confidence": 80,
+      "description": "Bridge message validation flaws"
+    },
+    "msg_replay": {
+      "regex": "receiveMessage|lzReceive|ccipReceive.*nonce",
+      "confidence": 85,
+      "description": "Replay of cross-chain messages - missing nonce or chain ID"
+    },
+    "validator_compromised": {
+      "regex": "validator.*sign|validatorSet|multisig.*validator",
+      "confidence": 75,
+      "description": "Compromised validator/relayer set"
+    },
+    "validator_threshold": {
+      "regex": "validator.*threshold|threshold.*require|min.*validator",
+      "confidence": 70,
+      "description": "Insufficient validator threshold"
+    },
+    "wrong_chain_id": {
+      "regex": "_chainId\\s*\\!\\=\\s*|chainId\\s*\\!\\=\\s*_dst",
+      "confidence": 80,
+      "description": "Wrong chain ID or domain in cross-chain messages"
+    },
+    "finality_reorg": {
+      "regex": "finality.*<|reorg.*confirm|confirmations\\s*<.*30",
+      "confidence": 75,
+      "description": "Finality / reorg assumptions on source chain"
+    },
+    "ordering_nonce": {
+      "regex": "_nonce\\s*\\+|\\+\\+|nonce.*mapping",
+      "confidence": 75,
+      "description": "Message ordering and nonce issues"
+    },
+    "retry_stuck": {
+      "regex": "retry.*message|nonblocking|retryable",
+      "confidence": 65,
+      "description": "Failed message retry and stuck funds"
+    },
+    "token_mapping": {
+      "regex": "_tokenMaps|tokenMapping|tokenId.*chain",
+      "confidence": 70,
+      "description": "Token mapping / wrapped token mismatches"
+    },
+    "fee_refund": {
+      "regex": "_fee.*msg\\.value|fee.*refund|nativeToken.*balance",
+      "confidence": 65,
+      "description": "Fee estimation and refund handling bugs"
+    },
+    "layerzero_misconfig": {
+      "regex": "lzEndpoint|setTrustedRemote|setConfig.*lz",
+      "confidence": 80,
+      "description": "LayerZero/CCIP/Wormhole integration misconfiguration"
+    },
+    "unvalidated_remote": {
+      "regex": "trustedRemote.*==.*0|trustedRemote.*_addr\\s*==",
+      "confidence": 85,
+      "description": "Unvalidated remote contract address (trusted remote)"
+    },
+    "cross_chain_reentry": {
+      "regex": "nonblocking.*call|callback.*external",
+      "confidence": 75,
+      "description": "Cross-chain reentrancy via callback"
+    },
+    "proof_verification": {
+      "regex": "verifyProof|verify.*proof.*merkle|light.*client",
+      "confidence": 70,
+      "description": "Light client / proof verification bugs"
+    },
+    "double_spend": {
+      "regex": "credited.*amount|credited.*msg\\.value.*_amount.*\\+",
+      "confidence": 80,
+      "description": "Double-spend across chains"
+    },
+    "unsafe_library_config": {
+      "regex": "lzSend.*gas|_dst.*lzSend|setUseLegacy",
+      "confidence": 70,
+      "description": "Unsafe default config of cross-chain libraries"
+    },
+    "sequencer_censorship": {
+      "regex": "sequencer.*censor|censorship|sequencer.*central",
+      "confidence": 65,
+      "description": "Sequencer centralization and censorship risk"
+    },
+    "l1_l2_gas": {
+      "regex": "gasLimit.*l2|l2Gas.*limit|gasLimit.*<.*100000",
+      "confidence": 70,
+      "description": "L1->L2 message gas underestimation (stuck messages)"
+    }
+  },
+  "account_abstraction": {
+    "erc4337_violation": {
+      "regex": "validateUserOp|validate.*sig.*nonce|userOp.*validate",
+      "confidence": 85,
+      "description": "ERC-4337 validation phase rule violations"
+    },
+    "paymaster_drain": {
+      "regex": "paymaster.*stake|paymaster.*deposit|paymaster.*drain",
+      "confidence": 80,
+      "description": "Paymaster draining or griefing"
+    },
+    "bundler_griefing": {
+      "regex": "bundler.*revert|bundle.*grief|handleOps.*fail",
+      "confidence": 70,
+      "description": "Bundler griefing"
+    },
+    "sig_aggregation": {
+      "regex": "aggregate.*sig|SigAggregator|signature.*combine",
+      "confidence": 70,
+      "description": "Signature aggregation flaws"
+    },
+    "wallet_module": {
+      "regex": "wallet.*module|plugin.*permission|module.*auth",
+      "confidence": 70,
+      "description": "Wallet module/plugin permission flaws"
+    },
+    "forwarder_spoof": {
+      "regex": "_msgSender|trustedForwarder|msg\\.sender\\s*\\!\\=\\s*trustedForwarder",
+      "confidence": 80,
+      "description": "Meta-transaction trusted forwarder spoofing"
+    },
+    "multicall_spoof": {
+      "regex": "multicall.*calldata|msg\\.data.*multicall|data.*forward",
+      "confidence": 75,
+      "description": "ERC-2771 + multicall calldata spoofing"
+    },
+    "relay_replay": {
+      "regex": "replayProtection|requestId.*nonce",
+      "confidence": 70,
+      "description": "Replay on relayed transactions"
+    },
+    "eip7702_abuse": {
+      "regex": "authorization|auth\\.sign|account.*update.*delegate",
+      "confidence": 80,
+      "description": "EIP-7702 authorization replay or delegation abuse"
+    },
+    "social_recovery": {
+      "regex": "socialRecovery|recover.*address.*count|guardian",
+      "confidence": 70,
+      "description": "Social recovery abuse"
+    }
+  },
+  "token": {
+    "non_standard_erc20": {
+      "regex": "return\\s+false;|return\\s+true;|if.*require\\s*\\{.*return",
+      "confidence": 70,
+      "description": "Non-standard ERC-20 without return value (e.g., USDT)"
+    },
+    "fee_on_transfer": {
+      "regex": "balance\\s*\\(\\s*\\)|fee.*balance|received\\s*=\\s*balance",
+      "confidence": 80,
+      "description": "Fee-on-transfer tokens breaking accounting"
+    },
+    "rebasing_token": {
+      "regex": "rebase|elastic.*supply|updateBalance.*index",
+      "confidence": 75,
+      "description": "Rebasing tokens breaking cached balances"
+    },
+    "erc777_token": {
+      "regex": "tokensReceived|operatorSend|defaultOperators",
+      "confidence": 80,
+      "description": "Tokens with hooks (ERC-777) enabling reentrancy"
+    },
+    "blocklist_token": {
+      "regex": "_isBlocked|blocklist|frozen\\s*\\[",
+      "confidence": 75,
+      "description": "Tokens with blocklists or pausing"
+    },
+    "flash_mint": {
+      "regex": "flashMint|flash_mint|FlashBorrower|mint.*without.*burn",
+      "confidence": 80,
+      "description": "Tokens with flash-mint or flash-loan features"
+    },
+    "changeable_decimals": {
+      "regex": "setDecimals|updateDecimals|decimals\\s*\\(\\s*\\)\\s*\\{",
+      "confidence": 70,
+      "description": "Tokens with changeable decimals"
+    },
+    "upgradeable_token": {
+      "regex": "upgradeToAndCall\\s*\\(\\s*\\)",
+      "confidence": 75,
+      "description": "Tokens with upgradeable logic changing behavior"
+    },
+    "approve_to_zero": {
+      "regex": "require.*approve.*0|require.*allowance.*0",
+      "confidence": 75,
+      "description": "Tokens with approve-to-zero requirements (USDT)"
+    },
+    "approve_race": {
+      "regex": "approve\\s*\\(\\s*\\).*non.*zero|amount.*allowance.*nonzero",
+      "confidence": 70,
+      "description": "ERC-20 approve race condition"
+    },
+    "infinite_approval": {
+      "regex": "MAX_UINT|type\\s*\\(\\s*uint256\\s*\\)\\s*\\.\\s*max|allowance.*uint256",
+      "confidence": 75,
+      "description": "Infinite approvals left to compromised spenders"
+    },
+    "allowance_underflow": {
+      "regex": "allowance\\s*-\\s*\\w+|allowance\\s*=\\s*\\w+\\s*-\\s*\\w+",
+      "confidence": 65,
+      "description": "transferFrom allowance underflow edge cases"
+    },
+    "deflationary_token": {
+      "regex": "balance.*\\-.*fee|actualReceived|received\\s*=\\s*balance.*fee",
+      "confidence": 80,
+      "description": "Deflationary token accounting mismatches"
+    },
+    "double_entry_point": {
+      "regex": "entryPoint.*address|account.*twins|double.*entry",
+      "confidence": 70,
+      "description": "Tokens with multiple entry points"
+    },
+    "zero_revert": {
+      "regex": "require\\s*\\(\\s*\\w+\\s*>\\s*0\\s*\\)",
+      "confidence": 60,
+      "description": "Token that reverts on zero transfer"
+    },
+    "return_false": {
+      "regex": "return\\s+false|return\\s+true",
+      "confidence": 60,
+      "description": "Token that returns false instead of reverting"
+    },
+    "high_low_supply": {
+      "regex": "10\\s*\\*\\s*\\*\\s*\\d+|10\\s*\\*\\*\\s*\\w+",
+      "confidence": 55,
+      "description": "Token with very high or low supply or decimals"
+    },
+    "nft_locked": {
+      "regex": "safeTransferFrom.*to.*contract|onERC721Received.*revert",
+      "confidence": 75,
+      "description": "ERC-721 transferFrom to contract not supporting NFTs (locked NFTs)"
+    },
+    "approval_not_cleared": {
+      "regex": "_checkOnERC721Enabled|checkOnERC721|clearApproval",
+      "confidence": 70,
+      "description": "ERC-721 approval not cleared on transfer"
+    },
+    "safe_mint_reentry": {
+      "regex": "safeMint|safeTransfer.*_hook",
+      "confidence": 85,
+      "description": "ERC-721 safeMint reentrancy"
+    },
+    "token_id_collision": {
+      "regex": "tokenId.*exist|_exists.*tokenId|tokenId.*==",
+      "confidence": 65,
+      "description": "ERC-721 token ID collision or predictable minting"
+    },
+    "enumerable_supply": {
+      "regex": "totalSupply|Enumerable|indexToId",
+      "confidence": 60,
+      "description": "ERC-721 enumerable / supply cap bypass"
+    },
+    "batch_mismatch": {
+      "regex": "safeBatchTransfer.*ids.*amounts|ids\\.length\\s*!=\\s*amounts\\.length",
+      "confidence": 75,
+      "description": "ERC-1155 batch transfer array mismatch"
+    },
+    "erc1155_reentry": {
+      "regex": "onERC1155Received",
+      "confidence": 80,
+      "description": "ERC-1155 reentrancy through onERC1155Received"
+    },
+    "erc1155_supply": {
+      "regex": "totalSupply.*id|exists.*id\\s*\\(\\s*\\)",
+      "confidence": 55,
+      "description": "ERC-1155 total supply not tracked"
+    },
+    "4626_inflation": {
+      "regex": "deposit.*0.*firstDepositor|firstDeposit|totalAssets.*0.*deposit",
+      "confidence": 85,
+      "description": "ERC-4626 inflation / donation attack on first depositor"
+    },
+    "4626_rounding": {
+      "regex": "previewDeposit|previewWithdraw.*round|convertToAssets.*\\\\+\\s*1",
+      "confidence": 75,
+      "description": "ERC-4626 rounding direction violations"
+    },
+    "4626_max_deposit": {
+      "regex": "maxDeposit|maxWithdraw|maxRedeem",
+      "confidence": 60,
+      "description": "ERC-4626 maxDeposit/maxWithdraw non-compliance"
+    },
+    "4626_preview": {
+      "regex": "previewDeposit|previewMint|previewWithdraw|previewRedeem",
+      "confidence": 60,
+      "description": "ERC-4626 preview functions inconsistent with actual operations"
+    },
+    "standard_noncompliance": {
+      "regex": "function\\s+name\\s*\\(\\s*\\)|function\\s+symbol\\s*\\(\\s*\\)\\s*\\{.*return",
+      "confidence": 65,
+      "description": "Standard non-compliance breaking integrations"
+    },
+    "balance_of_this": {
+      "regex": "balanceOf\\s*\\(\\s*this\\s*\\)",
+      "confidence": 80,
+      "description": "balanceOf(this) used for accounting - manipulable by donation"
+    },
+    "wrapped_native": {
+      "regex": "WETH.*deposit|deposit\\s*\\(\\s*\\).*value|receive\\s*\\(\\s*\\)",
+      "confidence": 60,
+      "description": "Wrapped native token assumptions (WETH deposit/withdraw edge cases)"
+    },
+    "royalty_bypass": {
+      "regex": "royaltyInfo|supportsInterface.*2981",
+      "confidence": 65,
+      "description": "Royalty enforcement bypass (EIP-2981 not enforced)"
+    },
+    "mutable_metadata": {
+      "regex": "tokenURI\\s*\\(\\s*\\)|baseURI\\s*=|setBaseURI",
+      "confidence": 70,
+      "description": "NFT metadata mutable / rug-pullable"
+    },
+    "stale_suppy": {
+      "regex": "totalSupply\\s*\\(\\s*\\)",
+      "confidence": 55,
+      "description": "Cached totalSupply becoming stale"
+    },
+    "burn_mint_mismatch": {
+      "regex": "burn.*mint|mint.*burn",
+      "confidence": 60,
+      "description": "Burn-and-mint accounting mismatch"
+    },
+    "vesting_cliff": {
+      "regex": "cliff|releaseTime\\s*=\\s*|vesting.*start",
+      "confidence": 65,
+      "description": "Token vesting cliff/schedule miscalculation"
+    },
+    "airdrop_double": {
+      "regex": "claim\\s*\\(\\s*\\)|claimed\\s*\\[",
+      "confidence": 75,
+      "description": "Airdrop claim double-spend potential"
+    }
+  },
+  "oracle": {
+    "compound_exchange_rate": {
+      "regex": "(exchangeRateStored|exchangeRateCurrent|exchangeRate)\\s*\\(",
+      "confidence": 85,
+      "description": "Compound v2 cToken exchange rate manipulation via exchangeRate manipulation"
+    },
+    "amm_price_manipulation": {
+      "regex": "[.;](getReserves|getAmountsOut)\\s*\\(",
+      "confidence": 80,
+      "description": "AMM price manipulation through getReserves/getAmountsOut"
+    },
+    "amm_flash_loan": {
+      "regex": "(flashLoan|executeOperation|receiveFlashLoan)",
+      "confidence": 80,
+      "description": "AMM + flash loan combo for price manipulation"
+    },
+    "chainlink_oracle": {
+      "regex": "(latestRoundData|AggregatorV3Interface)",
+      "confidence": 70,
+      "description": "Chainlink oracle usage - check for missing checks"
+    },
+    "spot_price_manipulation": {
+      "regex": "[.;](getReserves|sync)\\s*\\(|reserve0|reserve1",
+      "confidence": 80,
+      "description": "Spot price oracle manipulation via AMM reserves"
+    },
+    "flash_loan_assisted": {
+      "regex": "flashLoan|executeOperation|receiveFlashLoan",
+      "confidence": 85,
+      "description": "Flash loan-assisted price manipulation"
+    },
+    "stale_oracle": {
+      "regex": "staleness|stale|updateAt\\s*<",
+      "confidence": 80,
+      "description": "Stale oracle price (no staleness check)"
+    },
+    "zero_price": {
+      "regex": "latestRate\\s*==\\s*0|price\\s*==\\s*0|price\\s*<=\\s*0",
+      "confidence": 75,
+      "description": "Oracle returning zero or negative price"
+    },
+    "chainlink_round": {
+      "regex": "(latestRoundData|AggregatorV3Interface)",
+      "confidence": 70,
+      "description": "Missing Chainlink round completeness checks"
+    },
+    "chainlink_deprecated": {
+      "regex": "deprecated.*answer|MIN.*MAX.*answer|answer\\s*>\\s*",
+      "confidence": 75,
+      "description": "Chainlink feed deprecation or min/max answer bounds"
+    },
+    "l2_sequencer": {
+      "regex": "sequencer.*uptime|sequencer.*down|gracePeriod",
+      "confidence": 80,
+      "description": "L2 sequencer downtime not checked"
+    },
+    "twap_manipulable": {
+      "regex": "TWAP|timeWeighted|movingAverage",
+      "confidence": 70,
+      "description": "TWAP window too short or manipulable"
+    },
+    "oracle_decimal": {
+      "regex": "decimals\\s*!=\\s*18|decimals.*18|oracle.*decimals",
+      "confidence": 65,
+      "description": "Oracle decimal mismatch"
+    },
+    "single_oracle": {
+      "regex": "oracle\\s*=\\s*0x|priceFeed\\s*=\\s*0x",
+      "confidence": 75,
+      "description": "Single oracle dependency / single point of failure"
+    },
+    "oracle_misconfig": {
+      "regex": "_oracle.*=|_setOracle|setPriceFeed",
+      "confidence": 70,
+      "description": "Oracle address misconfiguration"
+    },
+    "lp_price_manipulation": {
+      "regex": "[.;](getReserves|sync|skim)\\s*\\(",
+      "confidence": 80,
+      "description": "Manipulating LP token price via reserve manipulation"
+    },
+    "read_only_reentrancy_price": {
+      "regex": "exchangeRate.*call|getPrice.*call",
+      "confidence": 75,
+      "description": "Read-only reentrancy to manipulate LP price"
+    },
+    "sandwich": {
+      "regex": "slippage|maxSlippage|minAmount",
+      "confidence": 65,
+      "description": "Sandwich attacks"
+    },
+    "front_run_trade": {
+      "regex": "swap.*slippage|swap.*deadline|amountOutMin",
+      "confidence": 70,
+      "description": "Front-running of trades and approvals"
+    },
+    "missing_deadline": {
+      "regex": "block\\.timestamp.*>\\s*deadline|deadline.*block\\.timestamp",
+      "confidence": 75,
+      "description": "Missing deadline on swaps"
+    },
+    "zero_slippage": {
+      "regex": "amountOutMin\\s*==\\s*amountIn|amountOutMin\\s*==\\s*0",
+      "confidence": 75,
+      "description": "Slippage set to zero by the protocol itself"
+    },
+    "infinite_mint": {
+      "regex": "mint.*without.*burn|infinite.*mint|supply.*no.*cap",
+      "confidence": 80,
+      "description": "Infinite minting through broken invariants"
+    },
+    "liquidation_manipulation": {
+      "regex": "liquidate.*bonus|liquidate.*discount|seize",
+      "confidence": 70,
+      "description": "Liquidation manipulation or unfair liquidation"
+    },
+    "bad_debt": {
+      "regex": "repay.*borrow|borrow.*repay|debt\\s*\\(\\s*\\)",
+      "confidence": 65,
+      "description": "Bad debt from insufficient collateral accounting"
+    },
+    "collateral_factor": {
+      "regex": "collateralFactor|collateralFactor.*=.*1|liquidationThreshold",
+      "confidence": 70,
+      "description": "Collateral factor misconfiguration"
+    },
+    "interest_rate_manipulation": {
+      "regex": "interestRate|rateModel|utilizationRate",
+      "confidence": 70,
+      "description": "Interest rate model manipulation"
+    },
+    "first_depositor_attack": {
+      "regex": "totalAssets\\s*==\\s*0|firstDeposit|totalSupply.*0.*deposit",
+      "confidence": 80,
+      "description": "First-depositor share inflation attack"
+    },
+    "donation_attack": {
+      "regex": "donate.*amount|donate.*0",
+      "confidence": 75,
+      "description": "Donation attacks on lending pools"
+    },
+    "same_block_borrow": {
+      "regex": "borrow.*sameBlock|block.*timestamp.*borrow",
+      "confidence": 70,
+      "description": "Borrow/repay in same block bypassing checks"
+    },
+    "governance_flash_loan": {
+      "regex": "propose.*gov|vote.*power.*flash",
+      "confidence": 75,
+      "description": "Flash loan governance attacks"
+    },
+    "flash_loan_fee_bypass": {
+      "regex": "fee\\s*==\\s*0|fee.*==.*0|flashFee.*0",
+      "confidence": 70,
+      "description": "Flash loan fee bypass"
+    },
+    "self_liquidation": {
+      "regex": "selfLiquidate|profit.*liquidat",
+      "confidence": 65,
+      "description": "Self-liquidation profit potential"
+    },
+    "liquidation_price_impact": {
+      "regex": "priceImpact|marketImpact|liquidate.*without.*impact",
+      "confidence": 65,
+      "description": "Price impact ignored in liquidations"
+    },
+    "reward_gaming": {
+      "regex": "snapshot.*balance|snapshot.*before|reward.*after",
+      "confidence": 70,
+      "description": "Reward gaming (deposit before snapshot, withdraw after)"
+    },
+    "strategy_loss": {
+      "regex": "harvest|invest.*loss|strategy.*loss",
+      "confidence": 60,
+      "description": "Yield aggregator strategy loss not accounted for"
+    },
+    "withdrawal_queue": {
+      "regex": "withdrawalQueue|requestWithdraw|queue",
+      "confidence": 65,
+      "description": "Vault withdrawal queue manipulation"
+    },
+    "stable_swap_exploit": {
+      "regex": "stableSwap|curve.*invariant|amp\\s*=",
+      "confidence": 70,
+      "description": "Pool imbalance exploits in stable-swap curves"
+    },
+    "curve_rounding": {
+      "regex": "curve.* rounding|Balancer.*rounding|invariant.*round",
+      "confidence": 65,
+      "description": "Curve/Balancer invariant math rounding exploits"
+    },
+    "uniswap_v3_math": {
+      "regex": "tick.*spacing|liquidity.*uint|getPosition",
+      "confidence": 65,
+      "description": "Uniswap V3 tick/liquidity math edge cases"
+    },
+    "uniswap_v4_hook": {
+      "regex": "beforeSwap|afterSwap|beforeAddLiquidity",
+      "confidence": 80,
+      "description": "Uniswap V4 hook vulnerabilities"
+    },
+    "composability_risk": {
+      "regex": "externalCall.*yield|externalCall.*reward",
+      "confidence": 65,
+      "description": "Cross-protocol composability risks"
+    },
+    "admin_param_change": {
+      "regex": "_set.*Param|set.*Fee|updateConfig.*admin",
+      "confidence": 70,
+      "description": "Protocol insolvency from unchecked admin parameter changes"
+    },
+    "economic_design": {
+      "regex": "rewardRate.*>|mint.*reward.*>.*burn",
+      "confidence": 60,
+      "description": "Economic design flaws (incentive misalignment)"
+    },
+    "emission_abuse": {
+      "regex": "emissionRate|emission.*start|tokensPerInterval|rate\\s*>\\s*0",
+      "confidence": 65,
+      "description": "Token emission schedule abuse"
+    },
+    "bonding_curve": {
+      "regex": "bondingCurve|curveTax|bonding.*price",
+      "confidence": 65,
+      "description": "Bonding curve manipulation"
+    },
+    "rebase_manipulation": {
+      "regex": "rebase.*rate|elastic.*supply|index\\s*=",
+      "confidence": 70,
+      "description": "Rebase manipulation via oracle"
+    },
+    "insurance_drain": {
+      "regex": "insurance.*fund|backstop.*drain|protection.*claim",
+      "confidence": 65,
+      "description": "Insurance/backstop fund drain"
+    },
+    "lending_dust": {
+      "regex": "minBorrow|min.*Deposit.*dust|lending.*dust",
+      "confidence": 60,
+      "description": "Dust position griefing in lending markets"
+    },
+    "pegged_depeg": {
+      "regex": "peg.*==\\s*1|stablecoin.*depeg|isHealthy",
+      "confidence": 75,
+      "description": "Pegged asset depeg risk not handled"
+    },
+    "governance_price": {
+      "regex": "governanceToken.*price|govPrice|vote.*price",
+      "confidence": 65,
+      "description": "Governance token price manipulation affecting collateral"
+    },
+    "uniswap_v2_reserve_manipulation": {
+      "regex": "balanceOf.*swap|pair.*balance|pair.*swap|swap.*balance.*pair",
+      "confidence": 80,
+      "description": "Uniswap V2 reserve manipulation via balanceOf before swap"
+    },
+    "flash_loan_price_manipulation": {
+      "regex": "flashLoan.*balanceOf|balanceOf.*flash|flash.*swap.*price|executeOperation.*swap",
+      "confidence": 80,
+      "description": "Flash loan assisted price manipulation via reserve checking before trade"
+    },
+    "reentrancy_price_oracle": {
+      "regex": "getPrice.*call|getLatestPrice.*call|price.*\\.call\\s*\\(",
+      "confidence": 75,
+      "description": "Price oracle updated via reentrant low-level call"
+    },
+    "external_call_return_value_ignored": {
+      "regex": "\\.call\\s*\\(\\s*\\)",
+      "confidence": 70,
+      "description": "External call with return value ignored (used to call untrusted contract)"
+    }
+  },
+  "exploit": {
+    "balance_of_before_swap": {
+      "regex": "balanceOf.*swap|balance.*reserve.*swap",
+      "confidence": 80,
+      "description": "Exploit: check balance before swap to manipulate oracle"
+    },
+    "flash_loan_arbitrage": {
+      "regex": "flashLoan|receiveFlashLoan|flash.*loan.*arbitrage",
+      "confidence": 80,
+      "description": "Exploit: flash loan for arbitrage or price manipulation"
+    },
+    "function_selector_attack": {
+      "regex": "hex\\\"[0-9a-fA-F]{8}\\\"|0x[0-9a-fA-F]{8}\\s*\\)",
+      "confidence": 70,
+      "description": "Exploit: raw function selector encoded for low-level call"
+    },
+    "delegatecall_exploit": {
+      "regex": "delegatecall.*calldata|delegatecall.*data|abi\\.encodeWithSignature.*delegatecall|delegatecall.*abi\\.encode",
+      "confidence": 85,
+      "description": "Exploit: delegatecall to inject malicious code"
+    },
+    "multicall_exploit": {
+      "regex": "abi\\.encodeWithSelector|hex\\\"[0-9a-fA-F]{8}\\\"",
+      "confidence": 75,
+      "description": "Exploit: encodeWithSelector or raw selector for multi-call attack"
+    },
+    "reentrancy_via_callback": {
+      "regex": "receive\\s*\\(\\s*\\)|fallback\\s*\\(\\s*\\)|onERC721Received|onTokenTransfer",
+      "confidence": 80,
+      "description": "Exploit: reentrancy via receive/fallback/callback"
+    },
+    "uniswap_v2_exploit": {
+      "regex": "pair.*swap|swap.*pair|0x55d3|0x7a250d|0xe592.*Uniswap",
+      "confidence": 80,
+      "description": "Exploit: Uniswap V2 pair swap manipulation"
+    },
+    "curve_pool_exploit": {
+      "regex": "curve.*exchange|exchange.*curve|3pool|busd.*pool|swap.*curve",
+      "confidence": 75,
+      "description": "Exploit: Curve pool exchange manipulation"
+    },
+    "oracle_sandwich": {
+      "regex": "amountOutMin\\s*==\\s*0|minAmount.*0|amountOutMin.*amountIn",
+      "confidence": 75,
+      "description": "Exploit: zero slippage enabling sandwich attacks"
+    },
+    "admin_function_exploit": {
+      "regex": "owner.*call|admin.*call|onlyOwner.*external|onlyAdmin.*external",
+      "confidence": 70,
+      "description": "Exploit: calling owner-only functions via delegatecall"
+    },
+    "permit_exploit": {
+      "regex": "permit\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*,\\s*\\w+\\s*,\\s*\\d+\\s*,\\s*\\d+",
+      "confidence": 75,
+      "description": "Exploit: permit signature front-running"
+    },
+    "transfer_from_exploit": {
+      "regex": "transferFrom.*msg\\.sender|msg\\.sender.*transferFrom",
+      "confidence": 70,
+      "description": "Exploit: transferFrom with manipulated allowance"
+    },
+    "mint_burn_exploit": {
+      "regex": "mint.*0x|burn.*msg\\.sender.*0|mint.*without.*burn|burn.*without.*mint",
+      "confidence": 80,
+      "description": "Exploit: mint or burn manipulation"
+    },
+    "withdraw_all_exploit": {
+      "regex": "withdraw\\s*\\(\\s*0x|withdrawAll|withdraw.*balance.*this",
+      "confidence": 75,
+      "description": "Exploit: withdraw all funds via balanceOf(this)"
+    },
+    "liquidation_exploit": {
+      "regex": "liquidate.*bonus|liquidate.*seize|seize.*bonus|bonus.*liquidat",
+      "confidence": 75,
+      "description": "Exploit: unfair liquidation bonus"
+    },
+    "collateral_manipulation": {
+      "regex": "collateral.*factor.*0|collateralFactor.*0|liquidationThreshold.*0",
+      "confidence": 70,
+      "description": "Exploit: zero collateral factor manipulation"
+    },
+    "fee_abuse": {
+      "regex": "fee.*==\\s*0|fee.*>\\s*0|take_fee.*0|harvest.*fee",
+      "confidence": 70,
+      "description": "Exploit: fee abuse (zero fee or excessive fee)"
+    },
+    "reentrancy_donation": {
+      "regex": "donate.*amount|donate.*0|eth.*donate.*balance",
+      "confidence": 80,
+      "description": "Exploit: donation attack on pool balance calculation"
+    },
+    "first_depositor": {
+      "regex": "firstDeposit|first_deposit|totalSupply.*==.*0.*deposit|deposit.*0.*share",
+      "confidence": 85,
+      "description": "Exploit: first-depositor share inflation"
+    },
+    "reward_harvest_timing": {
+      "regex": "harvest.*after|harvest.*before|sync.*harvest|harvest.*sync",
+      "confidence": 70,
+      "description": "Exploit: reward harvesting timing manipulation"
+    },
+    "flash_loan_simple": {
+      "regex": "flashLoanSimple|flashLoan.*simple|receiveFlashLoan.*simple",
+      "confidence": 75,
+      "description": "Exploit: Aave flash loan simple"
+    },
+    "callback_data_hijack": {
+      "regex": "calldata.*encode|encode.*calldata|data.*abi\\.encode.*call",
+      "confidence": 70,
+      "description": "Exploit: callback data hijacking"
+    },
+    "gas_limit_manipulation": {
+      "regex": "gas.*29000|gas.*100000|gas.*5000|gas.*3000|gasLimit.*low|gasLimit.*max",
+      "confidence": 70,
+      "description": "Exploit: gas limit manipulation in cross-chain or cross-contract calls"
+    }
+  },
+  "governance": {
+    "flash_loan_voting": {
+      "regex": "vote.*power.*flash|getVotes.*block|delegate.*flash",
+      "confidence": 80,
+      "description": "Flash-loaned voting power"
+    },
+    "malicious_proposal": {
+      "regex": "execute.*target|propose.*payload|executeTransaction",
+      "confidence": 85,
+      "description": "Proposal execution abuse / malicious proposal payloads"
+    },
+    "quorum_manipulation": {
+      "regex": "quorum.*<\\s*\\d|quorumPercent.*low|quorum.*0",
+      "confidence": 70,
+      "description": "Quorum manipulation"
+    },
+    "vote_delegation": {
+      "regex": "delegateByQuota|delegate.*type|delegateByType",
+      "confidence": 70,
+      "description": "Vote delegation abuse"
+    },
+    "double_vote": {
+      "regex": "snapshot.*block|snapshot.*number.*after",
+      "confidence": 75,
+      "description": "Double voting via token transfer after snapshot"
+    },
+    "snapshot_manipulation": {
+      "regex": "snapshotBlock|_block.*snapshot",
+      "confidence": 75,
+      "description": "Snapshot block manipulation"
+    },
+    "low_participation": {
+      "regex": "participation.*<\\s*0\\.2|turnout.*<.*low",
+      "confidence": 70,
+      "description": "Governance takeover via low participation"
+    },
+    "timelock_bypass": {
+      "regex": "minDelay.*==\\s*0|delay.*==\\s*0|timelock.*bypass",
+      "confidence": 80,
+      "description": "Timelock bypass or insufficient delay"
+    },
+    "proposal_frontrun": {
+      "regex": "propose.*cancel|proposal.*front\\|cancel.*timestamp",
+      "confidence": 65,
+      "description": "Proposal front-running or cancellation griefing"
+    },
+    "vote_buying": {
+      "regex": "bribe|voteBuy|incentive.*vote",
+      "confidence": 70,
+      "description": "Vote-buying or bribe markets"
+    },
+    "param_no_bounds": {
+      "regex": "setParameter.*no.*bound|set.*Param.*no.*check",
+      "confidence": 65,
+      "description": "Governance parameter changes without bounds"
+    },
+    "emergency_path": {
+      "regex": "emergencyExecute|fastTrack.*execute|panic.*execute",
+      "confidence": 70,
+      "description": "Emergency proposal paths bypassing checks"
+    }
+  }
+}

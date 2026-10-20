@@ -30,6 +30,10 @@ v5.1 integrates the `evolution_orchestrator.py` from the `learner/` subsystem so
 
 ## Architecture Overview
 
+<img src="architecture-diagram.png" alt="Architecture diagram" width="100%" />
+
+Or in ASCII-art form:
+
 ```
                     Contract Auditor v5.1
                               |
@@ -63,11 +67,17 @@ v5.1 integrates the `evolution_orchestrator.py` from the `learner/` subsystem so
    | analysis   | │   decompiler     |      |
    └────┬───────┘ │ • TS analyzer    |      |
         |         │ • Pattern libs   |      |
-        |         └────────┬─────────┘      |
-        |                  |                |
-        └──────────────────┘                |
-                      | combined output    |
-                      v                      |
+        |         └──┬───────┬───────┘      |
+        |            │       │              |
+        |            v       v              |
+        |    ┌────────────┐ ┌───────┐        |
+        |    │ additional │ │source │        |
+        |    │ Context    │ │code   │        |
+        |    └─────┬──────┘ └───┬───┘        |
+        |          |              |          |
+        └──────────┴──────────────┘          |
+                      | combined             |
+                      v output               |
            ┌─────────────────────┐           |
            |    runLLMAudit()     |           |
            │ OpenAI-compatible    │           |
@@ -123,26 +133,22 @@ v5.1 integrates the `evolution_orchestrator.py` from the `learner/` subsystem so
 - **Etherscan API key** (V2 unified API)
 - **OpenAI-compatible LLM API key** (OpenAI, Groq, Together, Pollinations, etc.)
 
-### Learner Subsystem Setup
+### Learner Subsystem (Bundled)
 
-This project depends on the **evolution_orchestrator.py** from the [`learner` subsystem](https://github.com/your-repo/learner) (located at `/home/ghost/projects/learner/`). The orchestrator provides:
+v5.1 **bundles the full learner subsystem** (orchestrator + TypeScript analyzer) in the `learner/` directory. No separate clone or installation is needed.
 
-- Etherscan V2 source fetching (chain ID based)
-- Porcelain-X Rust decompiler (bytecode → pseudocode)
-- TypeScript analyzer subprocess (`npx tsx src/analyzer/index.ts`)
-- Pattern library-based scoring (`vuln_pattern_library.json`, 411 patterns × 17 categories)
-- Zero-shot vulnerability reasoning via knowledge graph
+The bundled learner provides:
 
-The orchestrator must be at the path specified in `EVOLUTION_ORCHESTRATOR_PATH` (default: `/home/ghost/projects/learner/evolution_orchestrator.py`).
+- **Etherscan V2 source fetching** (chain ID based, with local caching)
+- **Porcelain-X Rust decompiler** (bytecode → pseudocode) via the `porosity-analyzer` binary
+- **TypeScript analyzer** subprocess (`npx tsx src/analyzer/index.ts`) for pattern-based vulnerability detection
+- **Pattern library** (`data/vuln_pattern_library.json`): 411 patterns across 17 vulnerability categories
+- **Zero-shot vulnerability reasoning** via knowledge graph → attacker hypotheses → precondition evaluation
+- **Label inference** from `vuln_contracts.jsonl` and `vuln_labels.json`
 
-**Dependencies of the orchestrator (install inside the learner directory):**
-```bash
-cd /home/ghost/projects/learner
-pip install -r requirements.txt  # if present
-npm install  # for npx tsx analyzer subprocess
-```
+The orchestrator automatically resolves paths relative to its own location (`learner/evolution_orchestrator.py`), so it works from the bundled directory without configuration.
 
-**Porcelain-X decompiler**: The orchestrator calls the `porosity-analyzer` Rust binary. It must be compiled and available on PATH, or the orchestrator's config updated to locate it.
+**Porcelain-X decompiler**: The orchestrator calls the `porosity-analyzer` Rust binary. If `PORTOXITY_X_BINARY` is not set in your environment, it will look for `../porosity-x/target/debug/porosity-analyzer` relative to the project root (i.e., `/home/ghost/projects/porosity-x/target/debug/porosity-analyzer`). You can also set `PORTOXITY_X_BINARY` to an absolute path to the compiled Rust binary.
 
 ---
 
@@ -174,19 +180,24 @@ Copy `.env.example` to `.env` and fill in values:
 
 ```env
 # MongoDB Atlas connection string (REQUIRED)
-MONGODB_URI=mongodb+srv://USER:PASS@cluster0.example.mongodb.net/dbname?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://USER:PASS@cluster0.example.mongodb.net/dbname?retryWrites=true&w=primary
 
 # Python binary (default: python3)
 PYTHON_BIN=python3
 
-# Path to evolution_orchestrator.py (REQUIRED for orchestrator integration)
-EVOLUTION_ORCHESTRATOR_PATH=/home/ghost/projects/learner/evolution_orchestrator.py
+# Path to evolution_orchestrator.py (OPTIONAL — defaults to ./learner/evolution_orchestrator.py)
+EVOLUTION_ORCHESTRATOR_PATH=
 
-# Debug logging for orchestrator (optional, default: 0)
+# Path to Porcelain-X Rust binary (OPTIONAL — defaults to ../porosity-x/target/debug/porosity-analyzer)
+PORTOXITY_X_BINARY=
+
+# Enable orchestrator debug logging to /tmp/orchestrator_debug_*.md
 ORCHESTRATOR_DEBUG=1
 ```
 
-> **Important:** The orchestrator runs as a subprocess via `child_process.spawn`. It inherits the main process's environment. Make sure `PYTHON_BIN` can execute the orchestrator and that the orchestrator's own dependencies (Python packages, `npx tsx`) are available in its `cwd`.
+> **Important:** The orchestrator runs as a subprocess via `child_process.spawn`. It inherits the main process's environment. The orchestrator's `npx tsx` subprocess resolves TypeScript files relative to its own `REPO_ROOT` (the `learner/` directory), so all analyzer source files are included in the bundle. The orchestrator uses Python's standard library + `requests` — no additional pip packages are required for the core flow.
+
+### 2. Frontend Configuration
 
 ### 2. Frontend Configuration
 
@@ -317,7 +328,8 @@ Fetch source for a single contract (with orchestrator fallback). Headers: `x-eth
 |----------|----------|---------|-------------|
 | `MONGODB_URI` | ✅ | — | MongoDB connection string |
 | `PYTHON_BIN` | ❌ | `python3` | Python executable for orchestrator subprocess |
-| `EVOLUTION_ORCHESTRATOR_PATH` | ✅ | `/home/ghost/projects/learner/evolution_orchestrator.py` | Path to orchestrator script |
+| `EVOLUTION_ORCHESTRATOR_PATH` | ❌ | `./learner/evolution_orchestrator.py` | Path to orchestrator script (bundled in v5.1) |
+| `PORTOXITY_X_BINARY` | ❌ | `../porosity-x/target/debug/porosity-analyzer` | Path to Porcelain-X Rust binary |
 | `ORCHESTRATOR_DEBUG` | ❌ | `0` | Save debug logs to `/tmp/orchestrator_debug_*.md` |
 | `LOG_LEVEL` | ❌ | `info` | Logging verbosity |
 | `PORT` | ❌ | `3000` | Server port (Render sets this automatically) |
@@ -390,6 +402,8 @@ The reaudit system for UNRATED contracts follows the same integration:
 3. Set the build command:
    ```bash
    npm install
+   # Install learner dependencies (for npx tsx TypeScript analyzer)
+   npm install --prefix learner
    ```
 4. Set the start command:
    ```bash
@@ -399,13 +413,13 @@ The reaudit system for UNRATED contracts follows the same integration:
    ```
    MONGODB_URI=<your-mongodb-atlas-connection-string>
    PYTHON_BIN=python3
-   EVOLUTION_ORCHESTRATOR_PATH=/opt/learner/evolution_orchestrator.py
    ORCHESTRATOR_DEBUG=0
    ```
-6. **Mount the learner subsystem** as a separate volume or bake it into a custom Docker image:
-   - The orchestrator must be at the path specified in `EVOLUTION_ORCHESTRATOR_PATH`
-   - Python 3 + required Python packages must be installed
-   - `npx tsx` must be available (Node.js + npm in the learner environment)
+   > `EVOLUTION_ORCHESTRATOR_PATH` and `PORTOXITY_X_BINARY` are optional — sensible defaults are bundled. Only override them if you're using an external orchestrator or custom Porcelain-X build.
+6. **Porcelain-X**: If deployed on Render, you'll need to include the `porosity-analyzer` Rust binary. Options:
+   - **Build a custom Docker image** that compiles Porcelain-X and copies it alongside the project
+   - **Set `PORTOXITY_X_BINARY`** to point to wherever you deploy the binary
+   - Without Porcelain-X, unverified contracts will fail decompilation (the system will log a warning and return the pattern-only analysis if source was fetched)
 
 **Render `render.yaml` (optional, for infra-as-code):**
 ```yaml
@@ -433,12 +447,16 @@ services:
 ```dockerfile
 FROM node:22-alpine
 
-# Install Python 3 (for orchestrator subprocess)
-RUN apk add --no-cache python3
+# Install Python 3 and build tools (for orchestrator subprocess + Porcelain-X)
+RUN apk add --no-cache python3 curl
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
+
+# Install learner dependencies (for npx tsx TypeScript analyzer)
+COPY learner/package*.json ./learner/
+RUN npm ci --prefix learner
 
 COPY . .
 
@@ -447,15 +465,16 @@ CMD ["node", "server.js"]
 ```
 
 ```bash
+# Build
 docker build -t contract-auditor-v5.1 .
+
+# Run (Porcelain-X binary optional — set PORTOXITY_X_BINARY if you have it)
 docker run -p 3000:3000 \
   -e MONGODB_URI="mongodb+srv://..." \
   -e PYTHON_BIN="python3" \
-  -e EVOLUTION_ORCHESTRATOR_PATH="/opt/learner/evolution_orchestrator.py" \
+  -e PORTOXITY_X_BINARY="/opt/porosity-x/porosity-analyzer" \
   contract-auditor-v5.1
 ```
-
-You'll need to mount or bake in the `learner/` subsystem separately.
 
 ### Manual (Linux/macOS)
 
@@ -475,16 +494,26 @@ node server.js
 
 ### Orchestrator fails to start
 
-- ✅ Verify `EVOLUTION_ORCHESTRATOR_PATH` points to a valid `evolution_orchestrator.py`
+- ✅ Verify `EVOLUTION_ORCHESTRATOR_PATH` points to a valid `evolution_orchestrator.py` (default: `./learner/evolution_orchestrator.py`)
 - ✅ Verify `PYTHON_BIN` can execute the script: `python3 /path/to/evolution_orchestrator.py --help`
-- ✅ Verify the orchestrator's own dependencies are installed (Python packages, `npx tsx`)
+- ✅ Verify the orchestrator's own dependencies are installed — `npx tsx` must work from the learner directory
 - ✅ Check debug output if `ORCHESTRATOR_DEBUG=1` is enabled (`/tmp/orchestrator_debug_*.md`)
 
 ### "Orchestrator could not retrieve or decompile source"
 
 - ✅ Verify your Etherscan API key is valid and has V2 access
 - ✅ The contract may not exist on the specified chain — verify chain ID
-- ✅ If the contract is unverified and Porcelain-X fails, ensure the Rust binary `porosity-analyzer` is installed and on PATH
+- ✅ If the contract is unverified and Porcelain-X fails, ensure the `porosity-analyzer` binary exists at `./porosity-x/target/debug/porosity-analyzer`
+- ✅ Verify the binary is executable: `chmod +x ./porosity-x/target/debug/porosity-analyzer`
+- ✅ Alternatively, set `PORTOXITY_X_BINARY` env var to an absolute path
+
+### Porcelain-X decompilation not working (empty `decompiledSource`)
+
+- ✅ The pre-compiled binary is bundled at `porosity-x/target/debug/porosity-analyzer`
+- ✅ Make sure it's executable: `chmod +x porosity-x/target/debug/porosity-analyzer`
+- ✅ For x86_64 Linux: the bundled binary should work out of the box
+- ✅ For other architectures: rebuild with `cargo build --release` from the `porosity-x/` directory
+- ✅ Without Porcelain-X, unverified contracts will still get pattern analysis but no decompiled pseudocode
 
 ### HTTP 503/502 from LLM provider
 
@@ -521,15 +550,16 @@ node server.js
 ```
 contract-auditor-v5.1/
 ├── server.js                      # Express server entry point
-├── package.json                   # Dependencies + start script
+├── package.json                   # Server dependencies + start script
 ├── .env.example                   # Environment variable template
 ├── .gitignore
 ├── .github/
 │   └── workflows/
 │       └── keepalive.yml          # GitHub Actions keep-alive
+├── README.md                      # This file
+├── INTEGRATION_SUMMARY.md         # Architectural summary of orchestrator integration
 ├── api/
 │   ├── audit.js                   # Single audit endpoint (orchestrator integration)
-│   ├── audit-db.js                # (if present) audit helpers
 │   ├── batch.js                   # Batch processing engine
 │   ├── batch-config.js            # Batch configuration helpers
 │   ├── com.js                     # COM dual-auditor mode
@@ -538,11 +568,56 @@ contract-auditor-v5.1/
 │   ├── etherscan.js               # Etherscan V2 source fetching + orchestrator fallback
 │   ├── evolve.js                  # Manual orchestrator test endpoint
 │   ├── llm.js                     # LLM API client (HTTP/1.1 enforced)
-│   ├── puter.js                   # (Legacy — kept for reference, not used)
 │   └── reaudit.js                 # Reaudit queue for UNRATED contracts
 ├── public/
 │   └── index.html                 # SPA frontend with DECOMPILED badges + Fast Parse sections
-└── INTEGRATION_SUMMARY.md         # Architectural summary of orchestrator integration
+├── learner/                       # === BUNDLED Learner Subsystem ===
+│   ├── evolution_orchestrator.py  # Main orchestrator (Python)
+│   ├── package.json               # Learner deps (tsx for analyzer)
+│   ├── package-lock.json
+│   ├── vuln_contracts.jsonl       # Contract dataset for label inference
+│   ├── data/
+│   │   ├── vuln_pattern_library.json  # 411 patterns × 17 categories
+│   │   ├── vuln_labels.json           # Label mappings
+│   │   └── vuln_patterns.json         # Pattern definitions
+│   └── src/
+│       ├── index.ts              # Learner entry point
+│       ├── api/                  # API server (not used by v5.1)
+│       ├── lib/                  # Utility modules (logger, etherscan)
+│       ├── training/             # Training pipeline (not used by v5.1)
+│       └── analyzer/             # === TypeScript Static Analyzer ===
+│           ├── index.ts          # CLI entry: npx tsx src/analyzer/index.ts --target <file> --json
+│           ├── extractor.ts      # Feature extraction
+│           ├── reasoner.ts       # Zero-shot vulnerability reasoner
+│           ├── ast/              # Solidity AST parser + tokenizer
+│           │   ├── parser.ts
+│           │   ├── tokenizer.ts
+│           │   └── types.ts
+│           ├── cfg/              # Control-flow graph builder
+│           ├── features/          # Feature extractors
+│           ├── knowledge/         # Docs processor
+│           ├── models/            # Architecture + bug database
+│           ├── taint/             # Taint analysis graph
+│           └── zero_shot/         # Zero-shot predictor + KB + patterns
+├── learner/node_modules/          # TSX + TypeScript (gitignored)
+├── porosity-x/                     # === Bundled Porcelain-X Rust Decompiler ===
+│   ├── Cargo.toml                  # Rust crate manifest
+│   ├── Cargo.lock                  # Pinned dependencies
+│   ├── src/                        # Rust source files
+│   │   ├── main.rs
+│   │   ├── lib.rs
+│   │   ├── analyzer.rs
+│   │   ├── blocks.rs
+│   │   ├── disasm.rs
+│   │   ├── semantics.rs
+│   │   ├── solkb.rs
+│   │   └── taint.rs
+│   ├── examples/
+│   │   └── test_debug.rs
+│   └── target/
+│       └── debug/
+│           └── porosity-analyzer    # Pre-compiled binary (make executable)
+└── porosity-x/                     # (same as above — bundled Rust decompiler)
 ```
 
 ---
