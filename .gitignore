@@ -12,3 +12,5 @@ learner/__pycache__/
 .DS_Store
 *.swp
 .tmp/
+porosity-x/target/debug/
+!

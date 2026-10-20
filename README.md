@@ -144,7 +144,7 @@ The bundled learner provides:
 - **TypeScript analyzer** subprocess (`npx tsx src/analyzer/index.ts`) for pattern-based vulnerability detection
 - **Pattern library** (`data/vuln_pattern_library.json`): 411 patterns across 17 vulnerability categories
 - **Zero-shot vulnerability reasoning** via knowledge graph → attacker hypotheses → precondition evaluation
-- **Label inference** from `vuln_contracts.jsonl` and `vuln_labels.json`
+- **Label inference** from `vuln_labels.json` (and explicit `--label` flag)
 
 The orchestrator automatically resolves paths relative to its own location (`learner/evolution_orchestrator.py`), so it works from the bundled directory without configuration.
 
@@ -499,7 +499,7 @@ node server.js
 - ✅ Verify the orchestrator's own dependencies are installed — `npx tsx` must work from the learner directory
 - ✅ Check debug output if `ORCHESTRATOR_DEBUG=1` is enabled (`/tmp/orchestrator_debug_*.md`)
 
-### "Orchestrator could not retrieve or decompile source"
+### Orchestrator fails to start
 
 - ✅ Verify your Etherscan API key is valid and has V2 access
 - ✅ The contract may not exist on the specified chain — verify chain ID
@@ -574,18 +574,13 @@ contract-auditor-v5.1/
 ├── learner/                       # === BUNDLED Learner Subsystem ===
 │   ├── evolution_orchestrator.py  # Main orchestrator (Python)
 │   ├── package.json               # Learner deps (tsx for analyzer)
-│   ├── package-lock.json
-│   ├── vuln_contracts.jsonl       # Contract dataset for label inference
 │   ├── data/
 │   │   ├── vuln_pattern_library.json  # 411 patterns × 17 categories
-│   │   ├── vuln_labels.json           # Label mappings
-│   │   └── vuln_patterns.json         # Pattern definitions
+│   │   └── vuln_labels.json            # Label mappings
 │   └── src/
-│       ├── index.ts              # Learner entry point
-│       ├── api/                  # API server (not used by v5.1)
-│       ├── lib/                  # Utility modules (logger, etherscan)
-│       ├── training/             # Training pipeline (not used by v5.1)
-│       └── analyzer/             # === TypeScript Static Analyzer ===
+│       ├── lib/
+│       │   └── logger.ts               # Shared logger utility
+│       └── analyzer/                   # === TypeScript Static Analyzer ===
 │           ├── index.ts          # CLI entry: npx tsx src/analyzer/index.ts --target <file> --json
 │           ├── extractor.ts      # Feature extraction
 │           ├── reasoner.ts       # Zero-shot vulnerability reasoner
@@ -599,7 +594,7 @@ contract-auditor-v5.1/
 │           ├── models/            # Architecture + bug database
 │           ├── taint/             # Taint analysis graph
 │           └── zero_shot/         # Zero-shot predictor + KB + patterns
-├── learner/node_modules/          # TSX + TypeScript (gitignored)
+├── learner/node_modules/          # TSX + TypeScript (gitignored, installed at build)
 ├── porosity-x/                     # === Bundled Porcelain-X Rust Decompiler ===
 │   ├── Cargo.toml                  # Rust crate manifest
 │   ├── Cargo.lock                  # Pinned dependencies
@@ -616,7 +611,7 @@ contract-auditor-v5.1/
 │   │   └── test_debug.rs
 │   └── target/
 │       └── debug/
-│           └── porosity-analyzer    # Pre-compiled binary (executable)
+│           └── porosity-analyzer    # Pre-compiled binary (12 MB executable)
 ```
 
 ---

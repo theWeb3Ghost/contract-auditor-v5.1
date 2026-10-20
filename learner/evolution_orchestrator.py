@@ -81,8 +81,8 @@ load_env_file((REPO_ROOT := Path(__file__).resolve().parent) / ".env")
 # ===========================================================================
 
 REPO_ROOT = Path(__file__).resolve().parent
-ETHERSCAN_API_KEY = os.environ.get("ETHERSCAN_API_KEY", "9WKB63B3PGD5VDT8BTUE27GKXZ79CV22PM")
-SCORE_THRESHOLD = float(os.environ.get("SCORE_THRESHOLD", "80"))
+ETHERSCAN_API_KEY = os.environ.get("ETHERSCAN_API_KEY", "")
+SCORE_THRESHOLD = float(os.environ.get("SCORE_THRESHOLD", "10"))
 MAX_FIX_ATTEMPTS = int(os.environ.get("MAX_FIX_ATTEMPTS", "5"))
 
 # Directories
@@ -1198,12 +1198,6 @@ def main():
     log(f"  Max Claude Code attempts: {MAX_FIX_ATTEMPTS}")
     log("=" * 60)
 
-    # Load contracts
-    contracts = load_vuln_contracts(args.subset)
-    if not contracts:
-        log("No contracts to process. Exiting.", "ERROR")
-        sys.exit(1)
-
     # If --address is provided, run on a single contract only
     if args.address:
         entry = {"target_address": args.address, "chain_id": args.chain,
@@ -1214,8 +1208,14 @@ def main():
         log(f"Single contract mode: {args.address} (chain {args.chain})")
         if args.label:
             log(f"  Label hint: {args.label}")
-    elif args.max_contracts:
-        contracts = contracts[:args.max_contracts]
+    else:
+        # Load contracts from vuln_contracts.jsonl (batch mode)
+        contracts = load_vuln_contracts(args.subset)
+        if not contracts:
+            log("No contracts to process. Exiting.", "ERROR")
+            sys.exit(1)
+        if args.max_contracts:
+            contracts = contracts[:args.max_contracts]
 
     total = len(contracts)
     log(f"Starting pipeline with {total} contracts")
