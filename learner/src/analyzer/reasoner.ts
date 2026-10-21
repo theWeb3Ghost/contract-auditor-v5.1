@@ -367,11 +367,12 @@ export class SemanticReasoner {
     for (const hyp of this.hypotheses) {
       const evaluation = this.evaluateHypothesis(hyp, featureVector);
 
-      // Apply learned confidence multiplier from RL feedback
+      // Apply learned confidence multiplier from RL feedback (only when
+      // an RL engine is actually configured with feedback data)
       let thresholdRisk = BASE_RISK_THRESHOLD;
       let thresholdConf = BASE_CONF_THRESHOLD;
 
-      if (rlEngine) {
+      if (rlEngine && rlEngine.isConfigured()) {
         const multiplier = rlEngine.getConfidenceMultiplier(hyp.id);
         if (multiplier !== 1.0) {
           evaluation.confidence = Math.min(1.0, evaluation.confidence * multiplier);

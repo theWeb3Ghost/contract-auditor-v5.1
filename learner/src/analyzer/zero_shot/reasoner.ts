@@ -406,11 +406,12 @@ export class SemanticReasoner {
       const evaluation = this.evaluateHypothesis(hyp, featureVector);
       const hypTags = hyp.tags || [];
 
-      // Apply learned confidence multiplier from RL feedback
+      // Apply learned confidence multiplier from RL feedback (only when
+      // an RL engine is actually configured with feedback data)
       let thresholdRisk = BASE_RISK_THRESHOLD;
       let thresholdConf = BASE_CONF_THRESHOLD;
 
-      if (rlEngine) {
+      if (rlEngine && rlEngine.isConfigured()) {
         const multiplier = rlEngine.getConfidenceMultiplier(hyp.id);
         // Scale thresholds so that poorly-performing hypotheses need a slightly
         // stronger signal to fire. The penalty scales with (1 - multiplier).
