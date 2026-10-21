@@ -39,7 +39,7 @@ async function runEvolutionOrchestrator(address, chainId, label) {
     '--epochs-max', '0',
   ];
   if (label) cmd.push('--label', label);
-  if (process.env.ORCHESTRATOR_DEBUG) cmd.push('--verbose');
+  if (process.env.ORCHESTRATOR_DEBUG === '1' || process.env.ORCHESTRATOR_DEBUG === 'true') cmd.push('--verbose');
 
   return new Promise((resolve, reject) => {
     const child = spawn(cmd[0], cmd.slice(1), {

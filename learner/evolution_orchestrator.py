@@ -93,6 +93,24 @@ RESULTS_DIR = REPO_ROOT / "data" / "results"
 CHECKPOINT_PATH = RESULTS_DIR / "checkpoint.json"
 DEFECT_LOG_PATH = RESULTS_DIR / "defect_analysis.json"
 DECCOMPILED_DIR = RESULTS_DIR / "decompiled"
+ERROR_LOG_PATH = RESULTS_DIR / "orchestrator_errors.jsonl"
+# User-facing error file committed to repo for debugging (not gitignored)
+PUBLIC_ERROR_LOG_PATH = REPO_ROOT / "orchestrator_error.txt"
+
+# Memory limit for Node.js subprocess.
+# The original default was 8192 (8GB) which causes OOM kills on constrained
+# environments like Render Free tier (512MB RAM). We now scale to available
+# system memory, capped at 8GB. On Render Free (512MB), this yields ~384MB
+# (80% of available, leaving headroom for the OS and Python orchestrator).
+try:
+    _avail_mem = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+    _mem_limit_mb = _avail_mem // (1024 * 1024)
+except (ValueError, OSError, AttributeError):
+    # Fallback for platforms without sysconf (e.g. some containers)
+    _mem_limit_mb = 512
+# Use 80% of available memory to leave headroom for the OS and parent process.
+# Cap at 8192 (8GB) for systems with very large RAM. Floor at 256MB minimum.
+memLimitMb = max(256, min(int(_mem_limit_mb * 0.8), 8192))
 
 # Paid-tier chains (skip on free tier)
 PAID_TIER_CHAINS = {
@@ -686,7 +704,7 @@ def run_analyzer(target_file: str, label: str | None = None) -> dict | None:
             text=True,
             timeout=120,
             cwd=str(REPO_ROOT),
-            env={**os.environ, "NODE_OPTIONS": "--max-old-space-size=8192"},
+            env={**os.environ, "NODE_OPTIONS": f"--max-old-space-size={memLimitMb}"},
         )
 
         if result.returncode != 0:
@@ -899,7 +917,7 @@ Fix attempt {attempt} of {MAX_FIX_ATTEMPTS}. Be surgical — add specific patter
             text=True,
             timeout=180,
             cwd=str(REPO_ROOT),
-            env={**os.environ, "NODE_OPTIONS": "--max-old-space-size=8192"},
+            env={**os.environ, "NODE_OPTIONS": f"--max-old-space-size={memLimitMb}"},
         )
 
         output = result.stdout
@@ -1023,6 +1041,13 @@ def process_contract(entry: dict, start_index: int) -> dict:
                     decompiled_pseudocode = synthesize_decompiled_source(porosityx_output)
                 save_decompiled_output(vulnerable_address, contract_name, porosityx_output, decompiled_pseudocode)
                 log(f"Porcelain-X: {len(porosityx_output.get('semantic_analysis', {}).get('semantic_findings', []))} semantic findings")
+                # CRITICAL: Write the synthesized pseudocode to temp_file so
+                # run_analyzer() parses Solidity-like source, NOT raw hex bytecode.
+                # Without this, the analyzer tries to parse hex as Solidity → crash.
+                temp_file = REPO_ROOT / "data" / "results" / f"target_{contract_name}_decompiled.sol"
+                temp_file.parent.mkdir(parents=True, exist_ok=True)
+                temp_file.write_text(decompiled_pseudocode, "utf-8")
+                log(f"Wrote decompiled pseudocode to {temp_file}")
         else:
             log("No bytecode available either — skipping", "WARN")
 
@@ -1045,8 +1070,10 @@ def process_contract(entry: dict, start_index: int) -> dict:
             # even when the inferred label is wrong.
             target_categories = {k: v for k, v in pattern_lib.items()}
             if target_categories:
-                # Scan source code (if available) and/or bytecode hex
+                # Scan source code (if available), pseudocode, or PorC output
                 scan_target = fetched_source
+                if not scan_target and decompiled_pseudocode:
+                    scan_target = decompiled_pseudocode
                 if not scan_target and porosityx_output:
                     # Bytecode-only path: scan Porcelain-X output fields
                     scan_target = json.dumps(porosityx_output, indent=2)
@@ -1370,25 +1397,57 @@ def main():
             save_checkpoint(i, total, entry.get("vulnerable_address", ""))
             sys.exit(130)
         except Exception as e:
+            err_tb = traceback.format_exc()
             log(f"Contract {entry.get('file', '?')} failed with error: {e}", "ERROR")
             traceback.print_exc()
-            results.append({
+            # Build an error result dict (NOT referencing `result` which was never assigned)
+            err_result = {
                 "contract": entry.get("file", "?"),
+                "address": entry.get("vulnerable_address", ""),
                 "status": "error",
                 "score": 0,
+                "confidence": 0,
                 "error": str(e),
+                "traceback": err_tb,
                 "attempts": 0,
-            })
+            }
+            results.append(err_result)
+
+            # Log error to per-contract error file AND public error file for debugging
+            try:
+                ERROR_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+                with open(ERROR_LOG_PATH, "a") as ef:
+                    ef.write(json.dumps({
+                        "address": entry.get("vulnerable_address", ""),
+                        "file": entry.get("file", ""),
+                        "error": str(e),
+                        "traceback": err_tb,
+                        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    }, indent=2) + "\n")
+            except Exception:
+                pass  # Don't let error-logging failure cascade
+
+            # Write to public error file committed to repo so Render failures
+            # are visible in the GitHub repo after the deploy run finishes
+            try:
+                with open(PUBLIC_ERROR_LOG_PATH, "a") as pf:
+                    pf.write(f"[{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}] "
+                             f"Address: {entry.get('vulnerable_address', '?')} | "
+                             f"Error: {str(e)[:500]} | "
+                             f"Traceback: {err_tb[:500]}\n\n")
+            except Exception:
+                pass
+
             failed += 1
             save_checkpoint(i + 1, total, entry.get("vulnerable_address", ""))
 
-            # Even on failure, try to write JSON output if requested
+            # Even on failure, write JSON output if requested
             if args.address and args.json_output:
                 try:
                     output_path = Path(args.json_output)
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     with open(output_path, "w") as jf:
-                        json.dump(result, jf, indent=2)
+                        json.dump(err_result, jf, indent=2)
                     log(f"JSON output (error state) written to {output_path}")
                 except Exception as write_err:
                     log(f"Failed to write JSON output: {write_err}", "ERROR")
