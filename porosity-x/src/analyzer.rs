@@ -278,57 +278,62 @@ fn recover_functions(blocks: &[BasicBlock], instructions: &[DecodedInstruction])
     let mut i = 0;
     while i < instructions.len() {
         if let Instruction::UNKNOWN(b) = instructions[i].opcode {
-            let push_size = b as u8 - 0x60 + 1;
-            if b >= 0x60 && b <= 0x7f && push_size == 4 {
-                // PUSH4 — extract selector
-                let selector = format!("0x{}", hex::encode(&instructions[i].immediate));
+            // Guard against underflow: only treat as PUSH when b is actually
+            // in the PUSH1..PUSH32 range (0x60..=0x7f). For any other UNKNOWN
+            // opcode, skip — it is not a function-selector pattern.
+            if b >= 0x60 && b <= 0x7f {
+                let push_size = b - 0x60 + 1;
+                if push_size == 4 {
+                    // PUSH4 — extract selector
+                    let selector = format!("0x{}", hex::encode(&instructions[i].immediate));
 
-                // Check what follows: AND (0x16) is common in Solidity dispatch,
-                // or directly EQ for simple dispatch
-                let mut j = i + 1;
-                let mut found_selector = false;
+                    // Check what follows: AND (0x16) is common in Solidity dispatch,
+                    // or directly EQ for simple dispatch
+                    let mut j = i + 1;
+                    let mut found_selector = false;
 
-                // Skip AND instructions (part of selector masking pattern)
-                while j < instructions.len() && matches!(instructions[j].opcode, Instruction::AND) {
-                    j += 1;
-                }
-
-                // Look for EQ within the next few instructions
-                let search_end = std::cmp::min(j + 8, instructions.len());
-                for k in j..search_end {
-                    if matches!(instructions[k].opcode, Instruction::EQ) {
-                        found_selector = true;
-                        break;
+                    // Skip AND instructions (part of selector masking pattern)
+                    while j < instructions.len() && matches!(instructions[j].opcode, Instruction::AND) {
+                        j += 1;
                     }
-                    // If we hit another PUSH4, this might be a new selector pair
-                    if let Instruction::UNKNOWN(b2) = instructions[k].opcode {
-                        if (0x60..=0x7f).contains(&b2) {
+
+                    // Look for EQ within the next few instructions
+                    let search_end = std::cmp::min(j + 8, instructions.len());
+                    for k in j..search_end {
+                        if matches!(instructions[k].opcode, Instruction::EQ) {
+                            found_selector = true;
                             break;
                         }
+                        // If we hit another PUSH4, this might be a new selector pair
+                        if let Instruction::UNKNOWN(b2) = instructions[k].opcode {
+                            if (0x60..=0x7f).contains(&b2) {
+                                break;
+                            }
+                        }
                     }
-                }
 
-                if found_selector && !seen_selectors.contains(&selector) {
-                    seen_selectors.insert(selector.clone());
+                    if found_selector && !seen_selectors.contains(&selector) {
+                        seen_selectors.insert(selector.clone());
 
-                    // Find the JUMPDEST that follows — search forward from this PUSH4
-                    let entry_point = find_selector_entry(&instructions[i + 1..]);
+                        // Find the JUMPDEST that follows — search forward from this PUSH4
+                        let entry_point = find_selector_entry(&instructions[i + 1..]);
 
-                    // Find the block that contains the entry point
-                    let entry_block = blocks.iter()
-                        .find(|b| b.offset <= entry_point && b.offset + b.size > entry_point)
-                        .map(|b| b.id)
-                        .unwrap_or(0);
+                        // Find the block that contains the entry point
+                        let entry_block = blocks.iter()
+                            .find(|b| b.offset <= entry_point && b.offset + b.size > entry_point)
+                            .map(|b| b.id)
+                            .unwrap_or(0);
 
-                    functions.push(FunctionInfo {
-                        selector,
-                        name: None,
-                        entry_point,
-                        entry_block,
-                        type_: "function".to_string(),
-                        is_payable: false,
-                        estimated_gas: None,
-                    });
+                        functions.push(FunctionInfo {
+                            selector,
+                            name: None,
+                            entry_point,
+                            entry_block,
+                            type_: "function".to_string(),
+                            is_payable: false,
+                            estimated_gas: None,
+                        });
+                    }
                 }
             }
         }
