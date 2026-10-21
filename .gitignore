@@ -14,3 +14,4 @@ learner/__pycache__/
 .tmp/
 porosity-x/target/debug/
 !
+/.rustc_info.json
